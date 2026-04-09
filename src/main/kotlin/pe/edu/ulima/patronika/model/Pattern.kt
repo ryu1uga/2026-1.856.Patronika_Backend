@@ -1,0 +1,51 @@
+package pe.edu.ulima.patronika.model
+
+import com.fasterxml.jackson.annotation.JsonIgnore
+import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
+import java.time.LocalDateTime
+
+@Entity
+@Table(name = "patterns")
+class Pattern (
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Int? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    var user: User = User(),
+
+    @Column(nullable = false)
+    var name: String = "",
+
+    @Column(nullable = false)
+    var imageUrl: String = "",
+
+    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.JSON) //
+    var gridData: String? = null,
+
+    @Column(nullable = false)
+    var size: Int = 0, //0 for small, 1 for medium, 2 for large
+
+    @Column(nullable = false)
+    var difficulty: Int = 0, //0 for basic, 1 for intermediate, 2 for blocked
+
+    @Column(nullable = false)
+    var technique: Int = 0, //0 for crochet, 1 for knitting, 2 for loom
+
+    @Column(nullable = false)
+    var isPublic: Boolean = false,
+
+    @Column(nullable = false)
+    var publishedAt: LocalDateTime? = null,
+
+    @Column(nullable = false)
+    var createdAt: LocalDateTime = LocalDateTime.now(),
+) {
+    @OneToMany(mappedBy = "pattern", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonIgnore
+    val publications: MutableList<Publication> = mutableListOf()
+}
