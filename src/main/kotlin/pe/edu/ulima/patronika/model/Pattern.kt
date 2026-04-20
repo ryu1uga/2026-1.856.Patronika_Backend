@@ -5,13 +5,14 @@ import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Entity
 @Table(name = "patterns")
 class Pattern (
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Int? = null,
+    @GeneratedValue(strategy = GenerationType.UUID)
+    var id: UUID? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -39,7 +40,6 @@ class Pattern (
     @Column(nullable = false)
     var isPublic: Boolean = false,
 
-    @Column(nullable = false)
     var publishedAt: LocalDateTime? = null,
 
     @Column(nullable = false)

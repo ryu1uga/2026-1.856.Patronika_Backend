@@ -1,4 +1,31 @@
 package pe.edu.ulima.patronika.model
 
-class Publication {
+import com.fasterxml.jackson.annotation.JsonIgnore
+import jakarta.persistence.*
+import java.time.LocalDateTime
+import java.util.UUID
+
+@Entity
+@Table(name = "publications")
+    class Publication (
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    var id: UUID? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    var user: User = User(),
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pattern_id", nullable = false)
+    var pattern: Pattern = Pattern(),
+
+    @Column(nullable = false)
+    var description: String = "",
+
+    var publishedAt: LocalDateTime? = null,
+) {
+    @OneToMany(mappedBy = "publication", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonIgnore
+    val comments: MutableList<Comment> = mutableListOf()
 }

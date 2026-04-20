@@ -34,10 +34,21 @@ class User (
     @Column(nullable = false)
     var activateNotification: Boolean = true,
 
-    @Column(nullable = false)
     var suspensionEndDate: LocalDateTime? = null
 ) {
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
     @JsonIgnore
     val patterns: MutableList<Pattern> = mutableListOf()
+
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonIgnore
+    val publications: MutableList<Publication> = mutableListOf()
+
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonIgnore
+    val comments: MutableList<Comment> = mutableListOf()
+
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonIgnore
+    val tutorialProgresses: MutableList<TutorialProgress> = mutableListOf()
 }
