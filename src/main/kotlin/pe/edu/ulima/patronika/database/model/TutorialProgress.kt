@@ -1,4 +1,4 @@
-package pe.edu.ulima.patronika.model
+package pe.edu.ulima.patronika.database.model
 
 import jakarta.persistence.*
 import java.time.LocalDateTime

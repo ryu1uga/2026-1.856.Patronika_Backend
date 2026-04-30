@@ -1,190 +1,107 @@
-package pe.edu.ulima.patronika.security
+package pe.edu.ulima.itlab.security
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.withContext
-import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.http.MediaType
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.bodyToMono
-import pe.edu.ulima.patronika.dto.*
+import org.springframework.transaction.annotation.Transactional
+import pe.edu.ulima.patronika.database.model.RefreshTokenEntity
+import pe.edu.ulima.patronika.database.repository.RefreshTokenRepository
+import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.exception.UnauthorizedException
-import pe.edu.ulima.patronika.model.User
-import pe.edu.ulima.patronika.repository.UserRepository
+import pe.edu.ulima.patronika.security.HashEncoder
 import pe.edu.ulima.patronika.services.UsersService
-import java.time.OffsetDateTime
+import java.security.MessageDigest
+import java.time.Instant
 import java.util.*
 
 @Service
 class AuthService(
-    private val usersService: UsersService,
+    private val jwtService: JwtService,
     private val userRepository: UserRepository,
+    private val usersService: UsersService,
     private val hashEncoder: HashEncoder,
-    @param:Qualifier("webClient") private val webClient: WebClient,
-    @param:Qualifier("xmlMapper") private val xmlMapper: XmlMapper
+    private val refreshTokenRepository: RefreshTokenRepository
 ) {
-    private val log = LoggerFactory.getLogger(AuthService::class.java)
+    @Transactional
+    fun login(username: String, password: String): Map<String, String> {
+        val user = userRepository.findByUsername(username)
+            ?: throw BadCredentialsException("Usuario o contraseña incorrectos")
 
-    private suspend fun authenticateWS(
-        userCode: String,
-        password: String,
-        path: String
-    ): LoginResult {
-        // 1. Construir objeto de petición
-        val requestEnvelope = LoginEnvelopeRequest(
-            body = LoginBodyRequest(
-                login = LoginRequestWS(
-                    userCode = userCode,
-                    password = password
-                )
-            )
-        )
-
-        // 2. Convertir a XML
-        val requestXml = xmlMapper.writeValueAsString(requestEnvelope)
-
-        log.debug("SOAP request XML -> {}: {}", path, requestXml)
-
-        // 3. Enviar petición y recibir respuesta como String
-        val responseXml: String = webClient.post()
-            .uri(path)
-            .contentType(MediaType.parseMediaType("text/xml; charset=UTF-8"))
-            .accept(MediaType.TEXT_XML, MediaType.APPLICATION_XML)
-            .bodyValue(requestXml)
-            .exchangeToMono { response ->
-                response.bodyToMono<String>()
-                    .defaultIfEmpty("")
-                    .map { body ->
-                        val status = response.statusCode().value()
-
-                        if (status == 401 || status == 403) {
-                            throw UnauthorizedException(
-                                "No autorizado por el servicio (HTTP $status). Verifica WS_USERNAME/WS_PASSWORD y que WS_URL sea la URL final (https)."
-                            )
-                        }
-
-                        if (response.statusCode().isError) {
-                            throw RuntimeException(
-                                "Error HTTP $status del servicio. Body: ${body.take(500)}"
-                            )
-                        }
-
-                        if (body.isBlank()) {
-                            throw RuntimeException(
-                                "Respuesta vacía del servicio (HTTP $status)"
-                            )
-                        }
-
-                        body
-                    }
-            }
-            .awaitSingle()
-
-        log.debug("SOAP response XML <- {}: {}", path, responseXml)
-
-        // 4. Parsear respuesta XML a objeto
-        val responseEnvelope = xmlMapper.readValue(responseXml, LoginEnvelopeResponse::class.java)
-
-        // 5. Extraer resultado
-        val result = responseEnvelope.body?.loginResponse?.loginResult
-            ?: throw RuntimeException("Respuesta del servicio inválida")
-
-        // 6. Verificar si hay error
-        if (!result.txMsgError.isNullOrBlank() && result.txMsgError != "TOKEN GENERADO") {
-            throw UnauthorizedException(result.txMsgError)
+        if(!hashEncoder.matches(password, user.hashedPassword)) {
+            throw BadCredentialsException("Usuario o contraseña incorrectos")
         }
 
-        return result
+        val newAccessToken = jwtService.generateAccessToken(user.id.toString())
+        val newRefreshToken = jwtService.generateRefreshToken(user.id.toString())
+
+        storeRefreshToken(user.id!!, newRefreshToken)
+
+        user.status = 0
+        usersRepository.save(user)
+
+        return mapOf(
+            "userId" to user.id.toString(),
+            "accessToken" to newAccessToken,
+            "refreshToken" to newRefreshToken
+        )
     }
 
-    suspend fun login(req: LoginRequest): User {
-        val wsResult = authenticateWS(
-            userCode = req.userCode,
-            password = req.password,
-            path = "/WsLoginULimaMovil"
+    @Transactional
+    fun refresh(refreshToken: String): Map<String, String> {
+        if(!jwtService.validateRefreshToken(refreshToken)) {
+            throw UnauthorizedException("Refresh token inválido")
+        }
+
+        val userId = jwtService.getUserIdFromToken(refreshToken)
+        val user = usersService.getUser(UUID.fromString(userId))
+
+        val hashed = hashToken(refreshToken)
+        refreshTokenRepository.findByUserIdAndToken(user.id!!, hashed)
+            ?: throw UnauthorizedException("Refresh token no reconocido (puede haber sido usado o expirado)")
+
+        refreshTokenRepository.deleteByUserIdAndToken(user.id, hashed)
+
+        val newAccessToken = jwtService.generateAccessToken(user.id.toString())
+        val newRefreshToken = jwtService.generateRefreshToken(user.id.toString())
+
+        storeRefreshToken(user.id, newRefreshToken)
+
+        return mapOf(
+            "accessToken" to newAccessToken,
+            "refreshToken" to newRefreshToken
         )
-
-        val clearRpta = wsResult.txRpta ?: ""
-        val clearToken = wsResult.txTknSesn ?: ""
-
-        val userToSave = withContext(Dispatchers.IO) {
-            userRepository.findByUserCode(wsResult.coUser ?: req.userCode)?.apply {
-                loggedIn = true
-                rpta = hashEncoder.encode(clearRpta)
-                token = hashEncoder.encode(clearToken)
-                updatedAt = OffsetDateTime.now()
-            } ?: User(
-                fullName = wsResult.txAlumno ?: "",
-                userCode = wsResult.coUser ?: "",
-                loggedIn = true,
-                userType = 0,
-                rpta = hashEncoder.encode(clearRpta),
-                token = hashEncoder.encode(clearToken),
-                createdAt = OffsetDateTime.now()
-            )
-        }
-
-        val savedUser = withContext(Dispatchers.IO) {
-            userRepository.save(userToSave)
-        }
-
-        savedUser.rpta = clearRpta
-        savedUser.token = clearToken
-        return savedUser
     }
 
-//    private fun generateUniqueToken(): String {
-//        var token: Int
-//        do {
-//            token = Random.nextInt(1000, 10000)
-//        } while (userRepository.findAll().any { it.token == token.toString() })
-//        return token.toString()
-//    }
-//
-//    fun loginOld(req: LoginRequest): Map<String, String> {
-//        val user = userRepository.findByUserCode(req.userCode)
-//            ?: throw UnauthorizedException("Usuario no registrado")
-//        val ok = hashEncoder.matches(req.password, user.password)
-//        if (!ok) throw UnauthorizedException("Credenciales incorrectas")
-//
-//        val newToken = if (user.token == "10000") "10000" else generateUniqueToken()
-//
-//        user.token = newToken
-//        user.loggedIn = true
-//        user.updatedAt = OffsetDateTime.now()
-//
-//        userRepository.save(user)
-//
-//        val dto = mapOf(
-//            "userId" to user.id.toString(),
-//            "fullName" to user.fullName,
-//            "userCode" to user.userCode,
-//            "lastName1" to "",
-//            "lastName2" to "",
-//            "names" to user.fullName,
-//            "specialtyName" to "",
-//            "urlPhoto" to "",
-//            "token" to user.token!!
-//        )
-//
-//        return dto
-//    }
+    private fun storeRefreshToken(userId: UUID, rawRefreshToken: String) {
+        val hashed = hashToken(rawRefreshToken)
+        val expiryMs = jwtService.refreshTokenValidityMs
+        val expiresAt = Instant.now().plusMillis(expiryMs)
 
-    fun logout(
-        id: UUID,
-        userId: UUID
-    ) {
-        if (id != userId) throw UnauthorizedException("userId no coincide")
+        refreshTokenRepository.save(
+            RefreshTokenEntity(
+                userId = userId,
+                expiresAt = expiresAt,
+                token = hashed
+            )
+        )
+    }
+
+    private fun hashToken(token: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hashBytes = digest.digest(token.encodeToByteArray())
+        return Base64.getEncoder().encodeToString(hashBytes)
+    }
+
+    @Transactional
+    fun logout(id: UUID, refreshToken: String) {
         val user = usersService.getUser(id)
 
-        user.loggedIn = false
-        user.rpta = null
-        user.token = null
-        user.updatedAt = OffsetDateTime.now()
+        val hashed = hashToken(refreshToken)
+        refreshTokenRepository.findByUserIdAndToken(user.id!!, hashed)
+            ?: throw UnauthorizedException("Refresh token no reconocido (puede haber sido usado o expirado)")
 
-        userRepository.save(user)
+        refreshTokenRepository.deleteByUserIdAndToken(user.id, hashed)
+
+        user.loggedIn = false
+        usersRepository.save(user)
     }
 }

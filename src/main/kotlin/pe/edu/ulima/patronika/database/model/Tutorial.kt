@@ -1,8 +1,7 @@
-package pe.edu.ulima.patronika.model
+package pe.edu.ulima.patronika.database.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
-import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity

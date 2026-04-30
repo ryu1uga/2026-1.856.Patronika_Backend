@@ -1,10 +1,9 @@
-package pe.edu.ulima.patronika.config
+package pe.edu.ulima.patronika.database
 
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import pe.edu.ulima.patronika.model.*
-import pe.edu.ulima.patronika.repository.*
+import kotlin.collections.get
 
 @Component
 class DatabaseSeeder(

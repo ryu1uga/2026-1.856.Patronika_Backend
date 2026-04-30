@@ -1,7 +1,6 @@
-package pe.edu.ulima.patronika.model
+package pe.edu.ulima.patronika.database.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.*
@@ -34,7 +33,9 @@ class User (
     @Column(nullable = false)
     var activateNotification: Boolean = true,
 
-    var suspensionEndDate: LocalDateTime? = null
+    var suspensionEndDate: LocalDateTime? = null,
+
+    var token: String = ""
 ) {
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
     @JsonIgnore
