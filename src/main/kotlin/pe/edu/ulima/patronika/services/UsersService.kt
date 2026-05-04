@@ -4,18 +4,39 @@ import org.springframework.stereotype.Service
 import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.*
+import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
+import pe.edu.ulima.patronika.security.HashEncoder
 import java.util.UUID
 
 @Service
 class UsersService (
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val hashEncoder: HashEncoder
 ) {
     fun getAll(): List<User> = userRepository.findAll()
 
     fun getUser(id: UUID): User {
         return userRepository.findById(id).orElseThrow { NotFoundException() }
+    }
+
+    fun insertUser(userRequest: UserRequest): User {
+        if(userRepository.findByUsername(userRequest.username) != null) {
+            throw ConflictException("Usuario ya existe")
+        }
+
+        val userEntity = User(
+            username = userRequest.username,
+            email = userRequest.email,
+            hashedPassword = hashEncoder.encode(userRequest.password),
+            isAdmin = userRequest.isAdmin,
+            status = userRequest.status,
+            activateNotification = userRequest.activateNotification,
+            suspensionEndDate = userRequest.suspensionEndDate
+        )
+
+        return userRepository.save(userEntity)
     }
 
     fun updateUser(
