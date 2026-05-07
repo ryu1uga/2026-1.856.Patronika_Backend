@@ -1,7 +1,7 @@
 package pe.edu.ulima.patronika.database.model
 
 import jakarta.persistence.*
-import java.time.LocalDateTime
+import java.time.LocalDate
 import java.util.UUID
 
 @Entity
@@ -18,5 +18,5 @@ import java.util.UUID
     @Column(nullable = false)
     var status: Int = 0, //0 for in-progress, 1 for complete
 
-    var registeredDate: LocalDateTime? = null,
+    var registeredDate: LocalDate? = LocalDate.now(),
 )

@@ -11,11 +11,25 @@ import java.util.UUID
 @Service
 class TutorialsService (
     private val tutorialRepository: TutorialRepository,
+    private val usersService: UsersService
 ) {
     fun getAll(): List<Tutorial> = tutorialRepository.findAll()
 
     fun getTutorial(id: UUID): Tutorial {
         return tutorialRepository.findById(id).orElseThrow { NotFoundException() }
+    }
+
+    fun insertTutorial(
+        tutorialRequest: TutorialRequest
+    ): Tutorial {
+        val tutorial = Tutorial(
+            title = tutorialRequest.title,
+            description = tutorialRequest.description,
+            difficulty = tutorialRequest.difficulty,
+            url = tutorialRequest.url
+        )
+
+        return tutorialRepository.save(tutorial)
     }
 
     fun updateTutorial(

@@ -1,7 +1,7 @@
 package pe.edu.ulima.patronika.dto
 
 import jakarta.validation.constraints.NotBlank
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 data class UserRequest(
     @field:NotBlank val username: String,
@@ -10,5 +10,5 @@ data class UserRequest(
     val isAdmin: Boolean = false,
     val status: Int = 0,
     val activateNotification: Boolean = true,
-    val suspensionEndDate: LocalDateTime? = null,
+    val suspensionEndDate: LocalDate? = null,
 )

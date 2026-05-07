@@ -5,16 +5,32 @@ import pe.edu.ulima.patronika.database.model.Comment
 import pe.edu.ulima.patronika.database.repository.CommentRepository
 import pe.edu.ulima.patronika.dto.CommentRequest
 import pe.edu.ulima.patronika.exception.NotFoundException
+import java.time.Instant
 import java.util.UUID
 
 @Service
 class CommentsService (
     private val commentRepository: CommentRepository,
+    private val usersService: UsersService
 ) {
     fun getAll(): List<Comment> = commentRepository.findAll()
 
     fun getComment(id: UUID): Comment {
         return commentRepository.findById(id).orElseThrow { NotFoundException() }
+    }
+
+    fun insertComment(
+        userId: UUID,
+        commentRequest: CommentRequest
+    ): Comment {
+        val user = usersService.getUser(userId)
+
+        val comment = Comment(
+            content = commentRequest.content,
+            user = user
+        )
+
+        return commentRepository.save(comment)
     }
 
     fun updateComment(
@@ -24,6 +40,7 @@ class CommentsService (
         val comment = getComment(id)
 
         comment.content = req.content
+        comment.updatedAt = Instant.now()
 
         commentRepository.save(comment)
     }

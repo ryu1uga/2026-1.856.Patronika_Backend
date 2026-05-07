@@ -6,12 +6,13 @@ import pe.edu.ulima.patronika.database.repository.TutorialProgressRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.TutorialProgressRequest
 import pe.edu.ulima.patronika.exception.NotFoundException
+import java.time.LocalDate
 import java.util.UUID
 
 @Service
 class TutorialProgressesService (
     private val tutorialProgressRepository: TutorialProgressRepository,
-    private val userRepository: UserRepository
+    private val usersService: UsersService
 ) {
     fun getAll(): List<TutorialProgress> = tutorialProgressRepository.findAll()
 
@@ -23,9 +24,14 @@ class TutorialProgressesService (
         userId: UUID,
         tutorialProgressRequest: TutorialProgressRequest
     ): TutorialProgress {
-        val user = getTutorialProgress(userId)
+        val user = usersService.getUser(userId)
 
+        val tutorialProgress = TutorialProgress(
+            user = user,
+            status = tutorialProgressRequest.status
+        )
 
+        return tutorialProgressRepository.save(tutorialProgress)
     }
 
     fun updateTutorialProgress(

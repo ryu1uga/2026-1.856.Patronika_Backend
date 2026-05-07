@@ -3,13 +3,15 @@ package pe.edu.ulima.patronika.services
 import org.springframework.stereotype.Service
 import pe.edu.ulima.patronika.database.model.Pattern
 import pe.edu.ulima.patronika.database.repository.PatternRepository
+import pe.edu.ulima.patronika.dto.PatternRequest
 import pe.edu.ulima.patronika.exception.NotFoundException
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 
 @Service
 class PatternsService (
     private val patternRepository: PatternRepository,
+    private val usersService: UsersService
 ) {
     fun getAll(): List<Pattern> = patternRepository.findAll()
 
@@ -17,9 +19,30 @@ class PatternsService (
         return patternRepository.findById(id).orElseThrow { NotFoundException() }
     }
 
+    fun insertPattern(
+        userId: UUID,
+        patternRequest: PatternRequest
+    ): Pattern {
+        val user = usersService.getUser(userId)
+
+        val pattern = Pattern(
+            name = patternRequest.name,
+            imageUrl = patternRequest.imageUrl,
+            gridData = patternRequest.gridData,
+            size = patternRequest.size,
+            difficulty = patternRequest.difficulty,
+            technique = patternRequest.technique,
+            isPublic = patternRequest.isPublic,
+            publishedAt = patternRequest.publishedAt,
+            user = user
+        )
+
+        return patternRepository.save(pattern)
+    }
+
     fun updatePattern(
         id: UUID,
-        req: Pattern,
+        req: PatternRequest,
     ) {
         val pattern = getPattern(id)
 

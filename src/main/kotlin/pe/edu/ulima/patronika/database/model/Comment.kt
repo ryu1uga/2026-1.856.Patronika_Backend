@@ -1,6 +1,7 @@
 package pe.edu.ulima.patronika.database.model
 
 import jakarta.persistence.*
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -23,7 +24,7 @@ class Comment (
     var content: String = "",
 
     @Column(nullable = false)
-    var createdAt: LocalDateTime = LocalDateTime.now(),
+    var createdAt: Instant = Instant.now(),
 
-    var updatedAt: LocalDateTime? = null,
+    var updatedAt: Instant? = null,
 )

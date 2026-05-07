@@ -2,6 +2,7 @@ package pe.edu.ulima.patronika.database.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -23,7 +24,7 @@ import java.util.UUID
     @Column(nullable = false)
     var description: String = "",
 
-    var publishedAt: LocalDateTime? = null,
+    var publishedAt: Instant? = null,
 ) {
     @OneToMany(mappedBy = "publication", cascade = [CascadeType.ALL], orphanRemoval = true)
     @JsonIgnore

@@ -2,7 +2,7 @@ package pe.edu.ulima.patronika.database.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
-import java.time.LocalDateTime
+import java.time.LocalDate
 import java.util.*
 
 @Entity
@@ -28,12 +28,12 @@ class User (
     var status: Int = 0, //0 for active, 1 for suspended, 2 for blocked
 
     @Column(nullable = false)
-    var registeredDate: LocalDateTime = LocalDateTime.now(),
+    var registeredDate: LocalDate = LocalDate.now(),
 
     @Column(nullable = false)
     var activateNotification: Boolean = true,
 
-    var suspensionEndDate: LocalDateTime? = null,
+    var suspensionEndDate: LocalDate? = null,
 
     var token: String = ""
 ) {

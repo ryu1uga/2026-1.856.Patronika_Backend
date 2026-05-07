@@ -1,6 +1,6 @@
 package pe.edu.ulima.patronika.dto
 
-import java.time.LocalDateTime
+import java.time.Instant
 
 data class PatternRequest (
     val name: String = "",
@@ -10,5 +10,5 @@ data class PatternRequest (
     val difficulty: Int = 0,
     val technique: Int = 0,
     val isPublic: Boolean = false,
-    val publishedAt: LocalDateTime? = null,
+    val publishedAt: Instant? = null,
 )
