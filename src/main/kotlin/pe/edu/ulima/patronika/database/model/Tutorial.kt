@@ -23,7 +23,7 @@ class Tutorial (
     @Column(nullable = false)
     var url: String = "",
 ) {
-    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "tutorial", cascade = [CascadeType.ALL], orphanRemoval = true)
     @JsonIgnore
     val tutorialProgresses: MutableList<TutorialProgress> = mutableListOf()
 }

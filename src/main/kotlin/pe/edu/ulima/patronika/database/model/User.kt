@@ -24,6 +24,9 @@ class User (
     @Column(nullable = false)
     var isAdmin: Boolean = false,
 
+    @Column(name = "logged_in", nullable = false)
+    var loggedIn: Boolean = false,
+
     @Column(nullable = false)
     var status: Int = 0, //0 for active, 1 for suspended, 2 for blocked
 

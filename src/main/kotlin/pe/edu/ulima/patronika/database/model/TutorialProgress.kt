@@ -15,6 +15,10 @@ import java.util.UUID
     @JoinColumn(name = "user_id", nullable = false)
     var user: User = User(),
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tutorial_id", nullable = false)
+    var tutorial: Tutorial = Tutorial(),
+
     @Column(nullable = false)
     var status: Int = 0, //0 for in-progress, 1 for complete
 

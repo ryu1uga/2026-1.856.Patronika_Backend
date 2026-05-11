@@ -32,8 +32,6 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-	implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
-	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	implementation("org.flywaydb:flyway-database-postgresql")

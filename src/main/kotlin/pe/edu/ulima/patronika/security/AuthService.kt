@@ -1,4 +1,4 @@
-package pe.edu.ulima.itlab.security
+package pe.edu.ulima.patronika.security
 
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.stereotype.Service
@@ -7,7 +7,6 @@ import pe.edu.ulima.patronika.database.model.RefreshTokenEntity
 import pe.edu.ulima.patronika.database.repository.RefreshTokenRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.exception.UnauthorizedException
-import pe.edu.ulima.patronika.security.HashEncoder
 import pe.edu.ulima.patronika.services.UsersService
 import java.security.MessageDigest
 import java.time.Instant
@@ -36,7 +35,7 @@ class AuthService(
         storeRefreshToken(user.id!!, newRefreshToken)
 
         user.status = 0
-        usersRepository.save(user)
+        userRepository.save(user)
 
         return mapOf(
             "userId" to user.id.toString(),
@@ -58,12 +57,12 @@ class AuthService(
         refreshTokenRepository.findByUserIdAndToken(user.id!!, hashed)
             ?: throw UnauthorizedException("Refresh token no reconocido (puede haber sido usado o expirado)")
 
-        refreshTokenRepository.deleteByUserIdAndToken(user.id, hashed)
+        refreshTokenRepository.deleteByUserIdAndToken(user.id!!, hashed)
 
         val newAccessToken = jwtService.generateAccessToken(user.id.toString())
         val newRefreshToken = jwtService.generateRefreshToken(user.id.toString())
 
-        storeRefreshToken(user.id, newRefreshToken)
+        storeRefreshToken(user.id!!, newRefreshToken)
 
         return mapOf(
             "accessToken" to newAccessToken,
@@ -99,9 +98,9 @@ class AuthService(
         refreshTokenRepository.findByUserIdAndToken(user.id!!, hashed)
             ?: throw UnauthorizedException("Refresh token no reconocido (puede haber sido usado o expirado)")
 
-        refreshTokenRepository.deleteByUserIdAndToken(user.id, hashed)
+        refreshTokenRepository.deleteByUserIdAndToken(user.id!!, hashed)
 
         user.loggedIn = false
-        usersRepository.save(user)
+        userRepository.save(user)
     }
 }

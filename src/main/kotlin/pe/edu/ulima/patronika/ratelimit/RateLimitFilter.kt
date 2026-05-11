@@ -84,7 +84,7 @@ class RateLimitFilter(
 
     private fun selectBandwidth(request: HttpServletRequest): RateLimitProperties.Bandwidth {
         val path = request.requestURI ?: ""
-        return if (path == "/api/auth/login" || path == "/api/auth/loginWS") {
+        return if (path == "/api/auth/login") {
             props.login
         } else {
             props.default
