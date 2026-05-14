@@ -4,6 +4,7 @@ CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     hashed_password VARCHAR(255) NOT NULL,
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    logged_in BOOLEAN NOT NULL DEFAULT FALSE,
     status INTEGER NOT NULL DEFAULT 0,
     registered_date DATE NOT NULL,
     activate_notification BOOLEAN NOT NULL DEFAULT TRUE,
@@ -56,4 +57,13 @@ CREATE TABLE comments (
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE refresh_tokens (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL,
+    token TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

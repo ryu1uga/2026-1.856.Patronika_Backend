@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.bucket4j.Bucket
-import io.github.bucket4j.Refill
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -22,7 +21,6 @@ class RateLimitFilter(
     private val props: RateLimitProperties,
     private val objectMapper: ObjectMapper
 ): OncePerRequestFilter() {
-
     private val bucketCache: Cache<String, Bucket> = Caffeine
         .newBuilder()
         .maximumSize(props.cache.maximumSize)
@@ -37,9 +35,9 @@ class RateLimitFilter(
         val path = request.requestURI ?: ""
 
         return path.startsWith("/swagger-ui/") ||
-            path.startsWith("/v3/api-docs/") ||
-            path == "/actuator/health" ||
-            path == "/api/healthcheck"
+                path.startsWith("/v3/api-docs/") ||
+                path == "/actuator/health" ||
+                path == "/api/healthcheck"
     }
 
     override fun doFilterInternal(
@@ -72,10 +70,11 @@ class RateLimitFilter(
 
     private fun newBucketFor(request: HttpServletRequest): Bucket {
         val bandwidthProps = selectBandwidth(request)
-        val limit = B4jBandwidth.classic(
-            bandwidthProps.capacity,
-            Refill.intervally(bandwidthProps.refillTokens, bandwidthProps.refillPeriod)
-        )
+
+        val limit = B4jBandwidth.builder()
+            .capacity(bandwidthProps.capacity)
+            .refillIntervally(bandwidthProps.refillTokens, bandwidthProps.refillPeriod)
+            .build()
 
         return Bucket.builder()
             .addLimit(limit)
@@ -84,7 +83,7 @@ class RateLimitFilter(
 
     private fun selectBandwidth(request: HttpServletRequest): RateLimitProperties.Bandwidth {
         val path = request.requestURI ?: ""
-        return if (path == "/api/auth/login") {
+        return if (path.startsWith("/api/auth")) {
             props.login
         } else {
             props.default
@@ -92,7 +91,7 @@ class RateLimitFilter(
     }
 
     private fun buildKey(request: HttpServletRequest): String {
-        val authentication = SecurityContextHolder.getContext()?.authentication
+        val authentication = SecurityContextHolder.getContext().authentication
         val principal = authentication?.principal
 
         if (authentication != null && authentication.isAuthenticated && principal != null && principal != "anonymousUser") {

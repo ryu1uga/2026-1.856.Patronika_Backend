@@ -3,6 +3,7 @@ package pe.edu.ulima.patronika.security
 import jakarta.servlet.DispatcherType
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -32,6 +33,7 @@ class SecurityConfig(
                         "/api/auth/refresh"
                     )
                     .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/users/").permitAll()
                     .dispatcherTypeMatchers(
                         DispatcherType.ERROR,
                         DispatcherType.FORWARD
