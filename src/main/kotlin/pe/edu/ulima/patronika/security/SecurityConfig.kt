@@ -33,7 +33,7 @@ class SecurityConfig(
                         "/api/auth/refresh"
                     )
                     .permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/users/").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                     .dispatcherTypeMatchers(
                         DispatcherType.ERROR,
                         DispatcherType.FORWARD

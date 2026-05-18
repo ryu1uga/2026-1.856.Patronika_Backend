@@ -39,7 +39,7 @@ class TutorialsController (
 
     @PutMapping("/{id}")
     fun putTutorial(
-        @RequestHeader("Id") id: UUID,
+        @PathVariable id: UUID,
         @Valid @RequestBody tutorialRequest: TutorialRequest
     ) : ResponseEntity<ApiResponse<String>> {
         tutorialsService.updateTutorial(id, tutorialRequest)

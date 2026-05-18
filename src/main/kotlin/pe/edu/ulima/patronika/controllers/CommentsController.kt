@@ -42,7 +42,7 @@ class CommentsController (
 
     @PutMapping("/{id}")
     fun putComment(
-        @RequestHeader("Id") id: UUID,
+        @PathVariable id: UUID,
         @Valid @RequestBody commentRequest: CommentRequest
     ) : ResponseEntity<ApiResponse<String>> {
         commentsService.updateComment(id, commentRequest)

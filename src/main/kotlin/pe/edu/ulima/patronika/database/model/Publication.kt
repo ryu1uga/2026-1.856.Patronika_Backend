@@ -13,11 +13,11 @@ import java.util.UUID
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     var user: User = User(),
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "pattern_id", nullable = false)
     var pattern: Pattern = Pattern(),
 

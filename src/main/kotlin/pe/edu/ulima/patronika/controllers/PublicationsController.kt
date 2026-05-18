@@ -41,7 +41,7 @@ class PublicationsController (
 
     @PutMapping("/{id}")
     fun putPublication(
-        @RequestHeader("id") id: UUID,
+        @PathVariable id: UUID,
         @Valid @RequestBody publicationRequest: PublicationRequest
     ) : ResponseEntity<ApiResponse<String>> {
         publicationsService.updatePublication(id, publicationRequest)

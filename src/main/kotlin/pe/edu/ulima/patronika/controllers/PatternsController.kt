@@ -40,7 +40,7 @@ class PatternsController (
 
     @PutMapping("/{id}")
     fun putPattern(
-        @RequestHeader("id") id: UUID,
+        @PathVariable id: UUID,
         @Valid @RequestBody patternRequest: PatternRequest
     ) : ResponseEntity<ApiResponse<String>> {
         patternsService.updatePattern(id, patternRequest)

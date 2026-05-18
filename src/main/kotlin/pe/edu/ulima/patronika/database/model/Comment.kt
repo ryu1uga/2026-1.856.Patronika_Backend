@@ -12,11 +12,11 @@ class Comment (
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     var user: User = User(),
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "publication_id", nullable = false)
     var publication: Publication = Publication(),
 

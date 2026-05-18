@@ -15,7 +15,7 @@ class Pattern (
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     var user: User = User(),
 

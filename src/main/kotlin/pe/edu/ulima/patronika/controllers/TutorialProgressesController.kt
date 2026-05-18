@@ -40,7 +40,7 @@ class TutorialProgressesController (
 
     @PutMapping("/{id}")
     fun putTutorialProgress(
-        @RequestHeader("Id") id: UUID,
+        @PathVariable id: UUID,
         @Valid @RequestBody tutorialProgressRequest: TutorialProgressRequest
     ) : ResponseEntity<ApiResponse<String>> {
         tutorialProgressesService.updateTutorialProgress(id, tutorialProgressRequest)
