@@ -6,6 +6,7 @@ import pe.edu.ulima.patronika.database.model.Pattern
 import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.database.repository.PatternRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
+import pe.edu.ulima.patronika.dto.PatternCreateRequest
 import pe.edu.ulima.patronika.dto.PatternRequest
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.NotFoundException
@@ -14,7 +15,8 @@ import java.util.UUID
 @Service
 class PatternsService (
     private val patternRepository: PatternRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val imageConvolutionService: ImageConvolutionService
 ) {
     fun getAll(): List<Pattern> = patternRepository.findAll()
 
@@ -28,18 +30,25 @@ class PatternsService (
 
     fun insertPattern(
         userId: UUID,
-        patternRequest: PatternRequest
+        patternRequest: PatternCreateRequest  // <-- usar el nuevo DTO
     ): Pattern {
         val user = getUser(userId)
+
+        // Procesar imagen si se subió una
+        val gridData: String? = patternRequest.image?.let { img ->
+            if (!img.isEmpty) {
+                imageConvolutionService.imageToGridData(img, patternRequest.size)
+            } else null
+        }
 
         val pattern = Pattern(
             name = patternRequest.name,
             size = patternRequest.size,
-            user = user
+            user = user,
+            gridData = gridData  // <-- asignar resultado
         )
         return patternRepository.save(pattern)
     }
-
     fun updatePattern(
         id: UUID,
         req: PatternRequest
