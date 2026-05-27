@@ -1,5 +1,4 @@
 package pe.edu.ulima.patronika.controllers
-
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -28,8 +27,8 @@ class PatternsController (
     }
 
     @PostMapping
-    fun postPattern(
-        @RequestHeader("userId") userId: UUID,
+    fun createPattern(
+        @RequestHeader("UserId") userId: UUID,
         @Valid @RequestBody patternRequest: PatternRequest
     ): ResponseEntity<ApiResponse<Pattern>> {
         val insertedPattern = patternsService.insertPattern(userId, patternRequest)
@@ -39,12 +38,12 @@ class PatternsController (
     }
 
     @PutMapping("/{id}")
-    fun putPattern(
+    fun updatePattern(
         @PathVariable id: UUID,
         @Valid @RequestBody patternRequest: PatternRequest
-    ) : ResponseEntity<ApiResponse<String>> {
+    ): ResponseEntity<ApiResponse<String>> {
         patternsService.updatePattern(id, patternRequest)
-        return ResponseEntity.ok(ApiResponse(true, "Patrón modificado exitosamente"))
+        return ResponseEntity.ok(ApiResponse(true, "Patrón modifiado exitosamente"))
     }
 
     @DeleteMapping("/{id}")

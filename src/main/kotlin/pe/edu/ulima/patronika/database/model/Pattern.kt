@@ -23,20 +23,11 @@ class Pattern (
     var name: String = "",
 
     @Column(nullable = false)
-    var imageUrl: String = "",
-
-    @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.JSON) //
     var gridData: String? = null,
 
     @Column(nullable = false)
     var size: Int = 0, //0 for small, 1 for medium, 2 for large
-
-    @Column(nullable = false)
-    var difficulty: Int = 0, //0 for basic, 1 for intermediate, 2 for blocked
-
-    @Column(nullable = false)
-    var technique: Int = 0, //0 for crochet, 1 for knitting, 2 for loom
 
     @Column(nullable = false)
     var isPublic: Boolean = false,

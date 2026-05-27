@@ -105,20 +105,14 @@ class DatabaseSeeder(
         val p1 = Pattern(
             user = maria,
             name = "Oso de Peluche Amigurumi",
-            imageUrl = "https://example.com/images/oso.jpg",
             size = 0, // Small
-            difficulty = 1, // Intermediate
-            technique = 0, // Crochet
             isPublic = true,
             publishedAt = Instant.now()
         )
         val p2 = Pattern(
             user = maria,
             name = "Bufanda de Invierno",
-            imageUrl = "https://example.com/images/bufanda.jpg",
             size = 1, // Medium
-            difficulty = 0, // Basic
-            technique = 1, // Knitting
             isPublic = false
         )
 
@@ -133,6 +127,8 @@ class DatabaseSeeder(
             user = maria,
             pattern = osoPattern,
             description = "Acabo de terminar este osito, ¡me encantó el resultado!",
+            technique = 0, // Crochet
+            imageUrl = "https://example.com/images/oso.jpg",
             publishedAt = Instant.now()
         )
 

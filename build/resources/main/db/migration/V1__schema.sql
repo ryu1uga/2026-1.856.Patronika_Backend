@@ -16,11 +16,8 @@ CREATE TABLE patterns (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id),
     name VARCHAR(255) NOT NULL,
-    image_url TEXT NOT NULL,
     grid_data JSONB,
     size INTEGER NOT NULL,
-    difficulty INTEGER NOT NULL,
-    technique INTEGER NOT NULL,
     is_public BOOLEAN NOT NULL DEFAULT FALSE,
     published_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL
@@ -31,6 +28,8 @@ CREATE TABLE publications (
     user_id UUID NOT NULL REFERENCES users(id),
     pattern_id UUID NOT NULL REFERENCES patterns(id),
     description TEXT NOT NULL,
+    technique INTEGER NOT NULL,
+    image_url TEXT,
     published_at TIMESTAMP WITH TIME ZONE
 );
 

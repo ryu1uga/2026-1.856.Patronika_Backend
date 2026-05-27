@@ -2,6 +2,7 @@ package pe.edu.ulima.patronika.services
 
 import org.hibernate.query.range.Range.pattern
 import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.database.model.Pattern
 import pe.edu.ulima.patronika.database.model.Publication
 import pe.edu.ulima.patronika.database.model.User
@@ -18,7 +19,8 @@ import java.time.Instant
 class PublicationsService (
     private val publicationRepository: PublicationRepository,
     private val userRepository: UserRepository,
-    private val patternRepository: PatternRepository
+    private val patternRepository: PatternRepository,
+    private val cloudinaryService: CloudinaryService
 ) {
     fun getAll(): List<Publication> = publicationRepository.findAll()
 
@@ -37,34 +39,53 @@ class PublicationsService (
     fun insertPublication(
         userId: UUID,
         patternId: UUID,
-        publicationRequest: PublicationRequest
+        publicationRequest: PublicationRequest,
+        file: MultipartFile?
     ): Publication {
         val user = getUser(userId)
         val pattern = getPattern(patternId)
 
         val publication = Publication(
             description = publicationRequest.description,
+            technique = publicationRequest.technique,
             publishedAt = Instant.now(),
             user = user,
             pattern = pattern
         )
+
+        // SI VIENE UN ARCHIVO NUEVO
+        file?.let {
+            // 1. Si ya tenía una imagen previa en Cloudinary, la borramos
+            publication.imageUrl?.let { oldUrl ->
+                if (oldUrl.contains("cloudinary.com")) {
+                    cloudinaryService.deleteImage(oldUrl)
+                }
+            }
+            // 2. Subimos la nueva imagen
+            val uploadedUrl = cloudinaryService.uploadImage(it, folder = "patterns")
+            publication.imageUrl = uploadedUrl
+        }
 
         return publicationRepository.save(publication)
     }
 
     fun updatePublication(
     id: UUID,
-    req: PublicationRequest
+    req: PublicationRequest,
+    file: MultipartFile?
     ) {
         val publication = getPublication(id)
+        val uploadedUrl = file?.let { cloudinaryService.uploadImage(it, folder = "patterns") }
 
         publication.description = req.description
+        publication.technique = req.technique
+        publication.imageUrl = uploadedUrl
 
         publicationRepository.save(publication)
     }
 
     fun deletePublication(id: UUID) {
-        if (!publicationRepository.existsById(id)) throw NotFoundException()
-        publicationRepository.deleteById(id)
+        val publication = getPublication(id) // Usamos getPublication para asegurar que existe y obtener sus datos
+        publicationRepository.delete(publication)
     }
 }
