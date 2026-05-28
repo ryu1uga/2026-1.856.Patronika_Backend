@@ -26,10 +26,7 @@ RUN ./gradlew bootJar -x test --no-daemon --info
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-# 4. CORRECCIÓN: Filtrar para copiar SOLO el jar ejecutable y evitar conflictos con el plain.jar
-COPY --from=build /home/gradle/src/build/libs/*-SNAPSHOT.jar app.jar
-# NOTA: Si tu proyecto no tiene la versión "-SNAPSHOT" en el build.gradle,
-# puedes usar: COPY --from=build /home/gradle/src/build/libs/*[0-9].jar app.jar
+COPY --from=build /home/gradle/src/build/libs/*[0-9].jar app.jar
 
 ENV PORT=8080
 ENTRYPOINT ["java","-jar","/app/app.jar"]
