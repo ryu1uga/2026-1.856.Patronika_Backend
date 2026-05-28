@@ -9,6 +9,7 @@ import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.database.model.Pattern
 import pe.edu.ulima.patronika.dto.PatternCreateRequest
 import pe.edu.ulima.patronika.dto.PatternRequest
+import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.services.PatternsService
 import java.util.UUID
 
@@ -36,11 +37,13 @@ class PatternsController (
         @RequestPart("size") size: String,
         @RequestPart("image", required = false) image: MultipartFile?
     ): ResponseEntity<ApiResponse<Pattern>> {
-        val request = PatternCreateRequest(
-            name = name,
-            size = size.toInt(),
-            image = image
-        )
+        val sizeInt = size.toIntOrNull()
+            ?: throw BadRequestException("El size debe ser un número entero")
+
+        if (sizeInt !in 1..100)
+            throw BadRequestException("El size debe estar entre 1 y 100")
+
+        val request = PatternCreateRequest(name = name, size = sizeInt, image = image)
         val insertedPattern = patternsService.insertPattern(userId, request)
         return ResponseEntity
             .status(HttpStatus.CREATED)

@@ -27,7 +27,7 @@ class Pattern (
     var gridData: String? = null,
 
     @Column(nullable = false)
-    var size: Int = 0, //0 for small, 1 for medium, 2 for large
+    var size: Int = 0,
 
     @Column(nullable = false)
     var isPublic: Boolean = false,
