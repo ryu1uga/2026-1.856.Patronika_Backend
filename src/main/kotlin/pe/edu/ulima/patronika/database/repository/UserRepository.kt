@@ -8,4 +8,5 @@ import java.util.*
 interface UserRepository: JpaRepository<User, UUID> {
     fun findByUsername(username: String): User?
     fun getUsersById(id: UUID): MutableList<User>
+    fun findByEmail(email: String): User?
 }

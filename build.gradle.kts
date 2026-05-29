@@ -44,6 +44,8 @@ dependencies {
 	implementation("com.bucket4j:bucket4j_jdk17-core:8.17.0")
 	implementation("com.bucket4j:bucket4j_jdk17-caffeine:8.17.0")
 	implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
+	implementation("com.cloudinary:cloudinary-http5:2.0.0")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 kotlin {

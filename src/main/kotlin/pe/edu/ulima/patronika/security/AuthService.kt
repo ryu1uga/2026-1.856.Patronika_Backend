@@ -1,12 +1,21 @@
 package pe.edu.ulima.patronika.security
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import pe.edu.ulima.patronika.database.model.EmailVerificationCodeEntity
+import pe.edu.ulima.patronika.database.model.EmailVerificationTokenEntity
 import pe.edu.ulima.patronika.database.model.RefreshTokenEntity
+import pe.edu.ulima.patronika.database.repository.EmailVerificationCodeRepository
+import pe.edu.ulima.patronika.database.repository.EmailVerificationTokenRepository
 import pe.edu.ulima.patronika.database.repository.RefreshTokenRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
+import pe.edu.ulima.patronika.dto.UserRequest
+import pe.edu.ulima.patronika.exception.BadRequestException
+import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
+import pe.edu.ulima.patronika.services.EmailService
 import pe.edu.ulima.patronika.services.UsersService
 import java.security.MessageDigest
 import java.time.Instant
@@ -18,14 +27,24 @@ class AuthService(
     private val userRepository: UserRepository,
     private val usersService: UsersService,
     private val hashEncoder: HashEncoder,
-    private val refreshTokenRepository: RefreshTokenRepository
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val emailVerificationCodeRepository: EmailVerificationCodeRepository,
+    private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
+    private val emailService: EmailService,
+    @Value("\${app.verification.code.expiry-ms}") private val codeExpiryMs: Long,
+    @Value("\${app.verification.token.expiry-ms}") private val tokenExpiryMs: Long
 ) {
+
+    // -------------------------
+    // Login / Refresh / Logout
+    // -------------------------
+
     @Transactional
     fun login(username: String, password: String): Map<String, String> {
         val user = userRepository.findByUsername(username)
             ?: throw BadCredentialsException("Usuario o contraseña incorrectos")
 
-        if(!hashEncoder.matches(password, user.hashedPassword)) {
+        if (!hashEncoder.matches(password, user.hashedPassword)) {
             throw BadCredentialsException("Usuario o contraseña incorrectos")
         }
 
@@ -46,7 +65,7 @@ class AuthService(
 
     @Transactional
     fun refresh(refreshToken: String): Map<String, String> {
-        if(!jwtService.validateRefreshToken(refreshToken)) {
+        if (!jwtService.validateRefreshToken(refreshToken)) {
             throw UnauthorizedException("Refresh token inválido")
         }
 
@@ -70,6 +89,116 @@ class AuthService(
         )
     }
 
+    @Transactional
+    fun logout(id: UUID, refreshToken: String) {
+        val user = usersService.getUser(id)
+
+        val hashed = hashToken(refreshToken)
+        refreshTokenRepository.findByUserIdAndToken(user.id!!, hashed)
+            ?: throw UnauthorizedException("Refresh token no reconocido (puede haber sido usado o expirado)")
+
+        refreshTokenRepository.deleteByUserIdAndToken(user.id!!, hashed)
+
+        user.loggedIn = false
+        userRepository.save(user)
+    }
+
+    // -------------------------
+    // Registro con verificación
+    // -------------------------
+
+    @Transactional
+    fun requestVerificationCode(email: String) {
+        if (userRepository.findByEmail(email) != null) {
+            throw ConflictException("El correo ya está registrado")
+        }
+
+        // Borrar códigos previos del mismo email
+        emailVerificationCodeRepository.deleteByEmail(email)
+
+        val code = (1000..9999).random().toString()
+        val hashed = hashToken(code)
+        val expiresAt = Instant.now().plusMillis(codeExpiryMs)
+
+        emailVerificationCodeRepository.save(
+            EmailVerificationCodeEntity(
+                email = email,
+                hashedCode = hashed,
+                expiresAt = expiresAt
+            )
+        )
+
+        emailService.sendVerificationCode(email, code)
+    }
+
+    @Transactional
+    fun verifyCode(email: String, code: String): Map<String, String> {
+        val hashed = hashToken(code)
+
+        val entity = emailVerificationCodeRepository.findByEmailAndHashedCode(email, hashed)
+            ?: throw BadRequestException("Código inválido o expirado")
+
+        if (Instant.now().isAfter(entity.expiresAt)) {
+            emailVerificationCodeRepository.delete(entity)
+            throw BadRequestException("El código ha expirado")
+        }
+
+        emailVerificationCodeRepository.delete(entity)
+
+        // Borrar token previo si existía (reenvío de flujo)
+        emailVerificationTokenRepository.deleteByEmail(email)
+
+        val rawToken = UUID.randomUUID().toString()
+        val hashedToken = hashToken(rawToken)
+        val expiresAt = Instant.now().plusMillis(tokenExpiryMs)
+
+        emailVerificationTokenRepository.save(
+            EmailVerificationTokenEntity(
+                email = email,
+                hashedToken = hashedToken,
+                expiresAt = expiresAt
+            )
+        )
+
+        return mapOf("verificationToken" to rawToken)
+    }
+
+    @Transactional
+    fun register(verificationToken: String, userRequest: UserRequest): Map<String, String> {
+        val hashedToken = hashToken(verificationToken)
+
+        val tokenEntity = emailVerificationTokenRepository.findByHashedToken(hashedToken)
+            ?: throw UnauthorizedException("Token de verificación inválido o expirado")
+
+        if (Instant.now().isAfter(tokenEntity.expiresAt)) {
+            emailVerificationTokenRepository.delete(tokenEntity)
+            throw UnauthorizedException("El token de verificación ha expirado")
+        }
+
+        if (tokenEntity.email != userRequest.email) {
+            throw UnauthorizedException("El correo no coincide con el token de verificación")
+        }
+
+        emailVerificationTokenRepository.delete(tokenEntity)
+
+        val user = usersService.insertUser(userRequest)
+
+        val newAccessToken = jwtService.generateAccessToken(user.id.toString())
+        val newRefreshToken = jwtService.generateRefreshToken(user.id.toString())
+
+        storeRefreshToken(user.id!!, newRefreshToken)
+
+        return mapOf(
+            "userId" to user.id.toString(),
+            "accessToken" to newAccessToken,
+            "refreshToken" to newRefreshToken
+        )
+    }
+
+    // -------------------------
+    // Helpers privados
+    // -------------------------
+
     private fun storeRefreshToken(userId: UUID, rawRefreshToken: String) {
         val hashed = hashToken(rawRefreshToken)
         val expiryMs = jwtService.refreshTokenValidityMs
@@ -88,19 +217,5 @@ class AuthService(
         val digest = MessageDigest.getInstance("SHA-256")
         val hashBytes = digest.digest(token.encodeToByteArray())
         return Base64.getEncoder().encodeToString(hashBytes)
-    }
-
-    @Transactional
-    fun logout(id: UUID, refreshToken: String) {
-        val user = usersService.getUser(id)
-
-        val hashed = hashToken(refreshToken)
-        refreshTokenRepository.findByUserIdAndToken(user.id!!, hashed)
-            ?: throw UnauthorizedException("Refresh token no reconocido (puede haber sido usado o expirado)")
-
-        refreshTokenRepository.deleteByUserIdAndToken(user.id!!, hashed)
-
-        user.loggedIn = false
-        userRepository.save(user)
     }
 }

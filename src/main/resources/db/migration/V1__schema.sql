@@ -16,11 +16,8 @@ CREATE TABLE patterns (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id),
     name VARCHAR(255) NOT NULL,
-    image_url TEXT NOT NULL,
     grid_data JSONB,
     size INTEGER NOT NULL,
-    difficulty INTEGER NOT NULL,
-    technique INTEGER NOT NULL,
     is_public BOOLEAN NOT NULL DEFAULT FALSE,
     published_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL
@@ -31,6 +28,8 @@ CREATE TABLE publications (
     user_id UUID NOT NULL REFERENCES users(id),
     pattern_id UUID NOT NULL REFERENCES patterns(id),
     description TEXT NOT NULL,
+    technique INTEGER NOT NULL,
+    image_url TEXT,
     published_at TIMESTAMP WITH TIME ZONE
 );
 
@@ -66,4 +65,20 @@ CREATE TABLE refresh_tokens (
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE email_verification_codes (
+    id UUID PRIMARY KEY,
+    email VARCHAR(100) NOT NULL,
+    hashed_code TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE email_verification_tokens (
+    id UUID PRIMARY KEY,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    hashed_token TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL
 );

@@ -1,12 +1,15 @@
 package pe.edu.ulima.patronika.controllers
-
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.database.model.Pattern
+import pe.edu.ulima.patronika.dto.PatternCreateRequest
 import pe.edu.ulima.patronika.dto.PatternRequest
+import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.services.PatternsService
 import java.util.UUID
 
@@ -27,24 +30,33 @@ class PatternsController (
         return ResponseEntity.ok(ApiResponse(true, pattern))
     }
 
-    @PostMapping
-    fun postPattern(
-        @RequestHeader("userId") userId: UUID,
-        @Valid @RequestBody patternRequest: PatternRequest
+    @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun createPattern(
+        @RequestHeader("UserId") userId: UUID,
+        @RequestPart("name") name: String,
+        @RequestPart("size") size: String,
+        @RequestPart("image", required = false) image: MultipartFile?
     ): ResponseEntity<ApiResponse<Pattern>> {
-        val insertedPattern = patternsService.insertPattern(userId, patternRequest)
+        val sizeInt = size.toIntOrNull()
+            ?: throw BadRequestException("El size debe ser un número entero")
+
+        if (sizeInt !in 1..100)
+            throw BadRequestException("El size debe estar entre 1 y 100")
+
+        val request = PatternCreateRequest(name = name, size = sizeInt, image = image)
+        val insertedPattern = patternsService.insertPattern(userId, request)
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(ApiResponse(true, insertedPattern))
     }
 
     @PutMapping("/{id}")
-    fun putPattern(
+    fun updatePattern(
         @PathVariable id: UUID,
         @Valid @RequestBody patternRequest: PatternRequest
-    ) : ResponseEntity<ApiResponse<String>> {
+    ): ResponseEntity<ApiResponse<String>> {
         patternsService.updatePattern(id, patternRequest)
-        return ResponseEntity.ok(ApiResponse(true, "Patrón modificado exitosamente"))
+        return ResponseEntity.ok(ApiResponse(true, "Patrón modifiado exitosamente"))
     }
 
     @DeleteMapping("/{id}")

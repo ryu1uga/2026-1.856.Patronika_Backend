@@ -30,7 +30,10 @@ class SecurityConfig(
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/api/auth/login",
-                        "/api/auth/refresh"
+                        "/api/auth/refresh",
+                        "/api/auth/register/request-code",
+                        "/api/auth/register/verify-code",
+                        "/api/auth/register"
                     )
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/users").permitAll()

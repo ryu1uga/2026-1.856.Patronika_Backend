@@ -1,0 +1,5 @@
+curl -X POST https://two026-1-856-patronika-backend.onrender.com/api/auth/register/request-code \
+
+     -H "Content-Type: application/json" \
+     
+     -d '{"email": "ryu1uga@gmail.com"}'

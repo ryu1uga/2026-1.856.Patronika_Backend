@@ -24,6 +24,12 @@ import java.util.UUID
     @Column(nullable = false)
     var description: String = "",
 
+    @Column(nullable = false)
+    var technique: Int = 0, //0 for crochet, 1 for knitting, 2 for loom
+
+    @Column(nullable = true)
+    var imageUrl: String? = null,
+
     var publishedAt: Instant? = null,
 ) {
     @OneToMany(mappedBy = "publication", cascade = [CascadeType.ALL], orphanRemoval = true)

@@ -1,19 +1,21 @@
 package pe.edu.ulima.patronika.controllers
 
-import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.database.model.Publication
 import pe.edu.ulima.patronika.dto.PublicationRequest
 import pe.edu.ulima.patronika.services.PublicationsService
+import tools.jackson.databind.ObjectMapper
 import java.util.UUID
 
 @RestController
 @RequestMapping("/api/publications")
 class PublicationsController (
-    private val publicationsService: PublicationsService
+    private val publicationsService: PublicationsService,
+    private val objectMapper: ObjectMapper
 ) {
     @GetMapping
     fun loadAllPublications(): ResponseEntity<ApiResponse<List<Publication>>> {
@@ -27,24 +29,26 @@ class PublicationsController (
         return ResponseEntity.ok(ApiResponse(true, publication))
     }
 
-    @PostMapping
+    @PostMapping(consumes = ["multipart/form-data"])
     fun postPublication(
-        @RequestHeader("userId") userId: UUID,
-        @RequestHeader("patternId") patternId: UUID,
-        @Valid @RequestBody publicationRequest: PublicationRequest
+        @RequestParam userId: UUID,
+        @RequestParam patternId: UUID,
+        @RequestParam("publication") publicationJson: String,
+        @RequestPart("file", required = false) file: MultipartFile?
     ): ResponseEntity<ApiResponse<Publication>> {
-        val insertedPublication = publicationsService.insertPublication(userId, patternId, publicationRequest)
-        return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(ApiResponse(true, insertedPublication))
+        val publicationRequest = objectMapper.readValue(publicationJson, PublicationRequest::class.java)
+        val insertedPublication = publicationsService.insertPublication(userId, patternId, publicationRequest, file)
+        return ResponseEntity(ApiResponse(true, insertedPublication), HttpStatus.CREATED)
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}", consumes = ["multipart/form-data"])
     fun putPublication(
         @PathVariable id: UUID,
-        @Valid @RequestBody publicationRequest: PublicationRequest
+        @RequestParam("publication") publicationJson: String,
+        @RequestPart("file", required = false) file: MultipartFile?
     ) : ResponseEntity<ApiResponse<String>> {
-        publicationsService.updatePublication(id, publicationRequest)
+        val publicationRequest = objectMapper.readValue(publicationJson, PublicationRequest::class.java)
+        publicationsService.updatePublication(id, publicationRequest, file)
         return ResponseEntity.ok(ApiResponse(true, "Publicación modificada exitosamente"))
     }
 
