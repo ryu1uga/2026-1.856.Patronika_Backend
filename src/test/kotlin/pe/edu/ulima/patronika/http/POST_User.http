@@ -1,0 +1,21 @@
+curl -X POST https://two026-1-856-patronika-backend.onrender.com/api/users \
+
+     -H "Content-Type: application/json" \
+
+     -d '{
+
+           "username": "Ryuichi",
+
+           "email": "ryu1uga@gmail.com",
+
+           "password": "ryuichi",
+
+           "isAdmin": true,
+
+           "status": 0,
+
+           "activateNotification": true,
+
+           "suspensionEndDate": null
+
+         }'
