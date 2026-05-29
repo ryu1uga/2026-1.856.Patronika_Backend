@@ -1,0 +1,6 @@
+POST https://two026-1-856-patronika-backend.onrender.com/api/auth/register/request-code
+Content-Type: application/json
+
+{
+  "email": "ryu1uga@gmail.com"
+}

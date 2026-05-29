@@ -1,0 +1,15 @@
+POST https://two026-1-856-patronika-backend.onrender.com/api/auth/register
+Content-Type: application/json
+
+{
+  "verificationToken": "PEGAR_TOKEN_DEL_PASO_2",
+  "user": {
+    "username": "Ryuichi",
+    "email": "ryu1uga@gmail.com",
+    "password": "ryuichi",
+    "isAdmin": true,
+    "status": 0,
+    "activateNotification": true,
+    "suspensionEndDate": null
+  }
+}
