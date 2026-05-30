@@ -24,6 +24,12 @@ class PatternsController (
         return ResponseEntity.ok(ApiResponse(true, patterns))
     }
 
+    @GetMapping("/user/{userId}")
+    fun loadPatternsByUserId(@PathVariable userId: UUID): ResponseEntity<ApiResponse<List<Pattern>>> {
+        val patterns = patternsService.getAllByUserId(userId)
+        return ResponseEntity.ok(ApiResponse(true, patterns))
+    }
+
     @GetMapping("/{id}")
     fun loadPattern(@PathVariable id: UUID): ResponseEntity<ApiResponse<Pattern>> {
         val pattern = patternsService.getPattern(id)

@@ -20,6 +20,14 @@ class PatternsService (
 ) {
     fun getAll(): List<Pattern> = patternRepository.findAll()
 
+    fun getAllByUserId(userId: UUID): List<Pattern> {
+        if (!userRepository.existsById(userId)) {
+            throw BadRequestException("Usuario no registrado")
+        }
+
+        return patternRepository.findAllByUserId(userId)
+    }
+
     fun getPattern(id: UUID): Pattern {
         return patternRepository.findById(id).orElseThrow { NotFoundException() }
     }
