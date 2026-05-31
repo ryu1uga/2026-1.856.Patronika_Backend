@@ -66,3 +66,19 @@ CREATE TABLE refresh_tokens (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE email_verification_codes (
+    id UUID PRIMARY KEY,
+    email VARCHAR(100) NOT NULL,
+    hashed_code TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+CREATE TABLE email_verification_tokens (
+    id UUID PRIMARY KEY,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    hashed_token TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
