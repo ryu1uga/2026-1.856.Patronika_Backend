@@ -2,8 +2,10 @@ package pe.edu.ulima.patronika.controllers
 
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.dto.UserRequest
@@ -27,11 +29,12 @@ class UsersController (
         return ResponseEntity.ok(ApiResponse(true, user))
     }
 
-    @PostMapping
+    @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun postUser(
-        @Valid @RequestBody userRequest: UserRequest
+        @Valid @RequestPart("userRequest") userRequest: UserRequest,
+        @RequestPart("file", required = false) file: MultipartFile?
     ): ResponseEntity<ApiResponse<User>> {
-        val insertedUser = usersService.insertUser(userRequest)
+        val insertedUser = usersService.insertUser(userRequest, file)
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(ApiResponse(true, insertedUser))

@@ -55,6 +55,7 @@ class DatabaseSeeder(
             username = "admin",
             email = "admin@patronika.com",
             hashedPassword = hashEncoder.encode("admin123"),
+            profileImageUrl = "https://example.com/images/admin.jpg",
             isAdmin = true,
             status = 0
         )
@@ -62,6 +63,7 @@ class DatabaseSeeder(
             username = "juan_perez",
             email = "juan@gmail.com",
             hashedPassword = hashEncoder.encode("juan123"),
+            profileImageUrl = "https://example.com/images/admin.jpg",
             isAdmin = false,
             status = 0
         )
@@ -69,6 +71,7 @@ class DatabaseSeeder(
             username = "maria_tejidos",
             email = "maria@tejidos.com",
             hashedPassword = hashEncoder.encode("maria123"),
+            profileImageUrl = "https://example.com/images/admin.jpg",
             isAdmin = false,
             status = 0
         )

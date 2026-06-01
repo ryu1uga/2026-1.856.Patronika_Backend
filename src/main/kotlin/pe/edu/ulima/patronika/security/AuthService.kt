@@ -132,7 +132,31 @@ class AuthService(
     }
 
     @Transactional
-    fun verifyCode(email: String, code: String): Map<String, String> {
+    fun requestVerificationCodeOnExistingEmail(email: String) {
+        if (userRepository.findByEmail(email) == null) {
+            throw ConflictException("El correo no está registrado")
+        }
+
+        // Borrar códigos previos del mismo email
+        emailVerificationCodeRepository.deleteByEmail(email)
+
+        val code = (1000..9999).random().toString()
+        val hashed = hashToken(code)
+        val expiresAt = Instant.now().plusMillis(codeExpiryMs)
+
+        emailVerificationCodeRepository.save(
+            EmailVerificationCodeEntity(
+                email = email,
+                hashedCode = hashed,
+                expiresAt = expiresAt
+            )
+        )
+
+        emailService.sendVerificationCode(email, code)
+    }
+
+    @Transactional
+    fun verifyCode(email: String, code: String) {
         val hashed = hashToken(code)
 
         val entity = emailVerificationCodeRepository.findByEmailAndHashedCode(email, hashed)
@@ -144,55 +168,15 @@ class AuthService(
         }
 
         emailVerificationCodeRepository.delete(entity)
-
-        // Borrar token previo si existía (reenvío de flujo)
-        emailVerificationTokenRepository.deleteByEmail(email)
-
-        val rawToken = UUID.randomUUID().toString()
-        val hashedToken = hashToken(rawToken)
-        val expiresAt = Instant.now().plusMillis(tokenExpiryMs)
-
-        emailVerificationTokenRepository.save(
-            EmailVerificationTokenEntity(
-                email = email,
-                hashedToken = hashedToken,
-                expiresAt = expiresAt
-            )
-        )
-
-        return mapOf("verificationToken" to rawToken)
     }
 
     @Transactional
-    fun register(verificationToken: String, userRequest: UserRequest): Map<String, String> {
-        val hashedToken = hashToken(verificationToken)
+    fun changePassword(userRequest: UserRequest) {
+        val user = userRepository.findByEmail(userRequest.email)
 
-        val tokenEntity = emailVerificationTokenRepository.findByHashedToken(hashedToken)
-            ?: throw UnauthorizedException("Token de verificación inválido o expirado")
+        user!!.hashedPassword = hashEncoder.encode(userRequest.password)
 
-        if (Instant.now().isAfter(tokenEntity.expiresAt)) {
-            emailVerificationTokenRepository.delete(tokenEntity)
-            throw UnauthorizedException("El token de verificación ha expirado")
-        }
-
-        if (tokenEntity.email != userRequest.email) {
-            throw UnauthorizedException("El correo no coincide con el token de verificación")
-        }
-
-        emailVerificationTokenRepository.delete(tokenEntity)
-
-        val user = usersService.insertUser(userRequest)
-
-        val newAccessToken = jwtService.generateAccessToken(user.id.toString())
-        val newRefreshToken = jwtService.generateRefreshToken(user.id.toString())
-
-        storeRefreshToken(user.id!!, newRefreshToken)
-
-        return mapOf(
-            "userId" to user.id.toString(),
-            "accessToken" to newAccessToken,
-            "refreshToken" to newRefreshToken
-        )
+        userRepository.save(user)
     }
 
     // -------------------------

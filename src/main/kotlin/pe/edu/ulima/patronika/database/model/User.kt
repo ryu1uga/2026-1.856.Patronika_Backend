@@ -21,6 +21,9 @@ class User (
     @Column(nullable = false)
     var hashedPassword: String = "",
 
+    @Column(name = "profile_image_url")
+    var profileImageUrl: String? = null,
+
     @Column(nullable = false)
     var isAdmin: Boolean = false,
 
