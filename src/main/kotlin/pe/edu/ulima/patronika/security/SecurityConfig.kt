@@ -31,9 +31,11 @@ class SecurityConfig(
                         "/v3/api-docs/**",
                         "/api/auth/login",
                         "/api/auth/refresh",
+                        "/api/auth/verify-code",
                         "/api/auth/register/request-code",
-                        "/api/auth/register/verify-code",
-                        "/api/auth/register"
+                        "/api/auth/register",
+                        "/api/auth/change-password/request-code",
+                        "/api/auth/change-password"
                     )
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
