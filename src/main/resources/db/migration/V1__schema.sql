@@ -3,7 +3,7 @@ CREATE TABLE users (
     username VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     hashed_password VARCHAR(255) NOT NULL,
-    image_url TEXT,
+    profile_image_url TEXT,
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     logged_in BOOLEAN NOT NULL DEFAULT FALSE,
     status INTEGER NOT NULL DEFAULT 0,
