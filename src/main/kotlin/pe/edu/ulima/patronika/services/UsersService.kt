@@ -65,6 +65,22 @@ class UsersService (
         userRepository.save(user)
     }
 
+    fun updateProfileImage(
+        id: UUID,
+        file: MultipartFile
+    ): User {
+        val user = getUser(id)
+
+        user.profileImageUrl?.let {
+            cloudinaryService.deleteImage(it)
+        }
+
+        val uploadedUrl = cloudinaryService.uploadImage(file, folder = "users")
+        user.profileImageUrl = uploadedUrl
+
+        return userRepository.save(user)
+    }
+
     fun deleteUser(
         username: String,
         userId: UUID

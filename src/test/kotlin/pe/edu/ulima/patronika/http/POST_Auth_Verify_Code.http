@@ -2,4 +2,4 @@ curl -X POST https://two026-1-856-patronika-backend.onrender.com/api/auth/verify
 
      -H "Content-Type: application/json" \
      
-     -d '{"email": "ryu1uga@gmail.com", "code": "4733"}'
+     -d '{"email": "ryu1uga@gmail.com", "code": "PEGAR_CODIGO_DEL_PASO_1"}'

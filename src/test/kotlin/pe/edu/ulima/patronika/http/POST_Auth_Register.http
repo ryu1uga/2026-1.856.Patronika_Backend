@@ -1,14 +1,2 @@
 curl -X POST https://two026-1-856-patronika-backend.onrender.com/api/auth/register \
-     -H "Content-Type: application/json" \
-     -d '{
-           "verificationToken": "PEGAR_TOKEN_DEL_PASO_2",
-           "user": {
-             "username": "Ryuichi",
-             "email": "ryu1uga@gmail.com",
-             "password": "ryuichi",
-             "isAdmin": true,
-             "status": 0,
-             "activateNotification": true,
-             "suspensionEndDate": null
-           }
-         }'
+     -F 'userRequest={"username":"Ryuichi","email":"ryu1uga@gmail.com","password":"ryuichi","isAdmin":true,"status":0,"activateNotification":true,"suspensionEndDate":null};type=application/json'

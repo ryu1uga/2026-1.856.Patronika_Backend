@@ -49,6 +49,18 @@ class UsersController (
         return ResponseEntity.ok(ApiResponse(true, "Usuario modificado exitosamente"))
     }
 
+    @PutMapping(
+        "/{id}/profile-image",
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
+    )
+    fun updateProfileImage(
+        @PathVariable id: UUID,
+        @RequestPart("file") file: MultipartFile
+    ): ResponseEntity<ApiResponse<User>> {
+        val updatedUser = usersService.updateProfileImage(id, file)
+        return ResponseEntity.ok(ApiResponse(true, updatedUser))
+    }
+
     @DeleteMapping("/{id}/{username}")
     fun deleteUser(@PathVariable id: UUID, @PathVariable username: String): ResponseEntity<ApiResponse<String>> {
         usersService.deleteUser(username, id)
