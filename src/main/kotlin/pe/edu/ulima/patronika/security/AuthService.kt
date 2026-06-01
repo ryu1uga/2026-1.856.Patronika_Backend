@@ -5,10 +5,8 @@ import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import pe.edu.ulima.patronika.database.model.EmailVerificationCodeEntity
-import pe.edu.ulima.patronika.database.model.EmailVerificationTokenEntity
 import pe.edu.ulima.patronika.database.model.RefreshTokenEntity
 import pe.edu.ulima.patronika.database.repository.EmailVerificationCodeRepository
-import pe.edu.ulima.patronika.database.repository.EmailVerificationTokenRepository
 import pe.edu.ulima.patronika.database.repository.RefreshTokenRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.UserRequest
@@ -29,7 +27,6 @@ class AuthService(
     private val hashEncoder: HashEncoder,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val emailVerificationCodeRepository: EmailVerificationCodeRepository,
-    private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private val emailService: EmailService,
     @Value("\${app.verification.code.expiry-ms}") private val codeExpiryMs: Long,
     @Value("\${app.verification.token.expiry-ms}") private val tokenExpiryMs: Long
