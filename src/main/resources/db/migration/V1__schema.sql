@@ -75,11 +75,3 @@ CREATE TABLE email_verification_codes (
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
-
-CREATE TABLE email_verification_tokens (
-    id UUID PRIMARY KEY,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    hashed_token TEXT NOT NULL,
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL
-);
