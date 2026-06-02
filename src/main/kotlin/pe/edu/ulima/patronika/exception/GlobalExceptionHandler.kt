@@ -4,6 +4,7 @@ import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -11,6 +12,7 @@ import pe.edu.ulima.patronika.ApiResponse
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+
     @ExceptionHandler(NotFoundException::class)
     fun handleNotFound(e: NotFoundException): ResponseEntity<ApiResponse<String>> =
         ResponseEntity
@@ -28,6 +30,12 @@ class GlobalExceptionHandler {
         ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
             .body(ApiResponse(false, e.message))
+
+    @ExceptionHandler(BadCredentialsException::class)
+    fun handleBadCredentials(e: BadCredentialsException): ResponseEntity<ApiResponse<String>> =
+        ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .body(ApiResponse(false, e.message ?: "Credenciales inválidas"))
 
     @ExceptionHandler(ConflictException::class)
     fun handleConflict(e: ConflictException): ResponseEntity<ApiResponse<String>> =
@@ -58,7 +66,7 @@ class GlobalExceptionHandler {
         return if (rootCause.contains("unique constraint") || rootCause.contains("duplicate key")) {
             ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(ApiResponse(false, "Ya existe"))
+                .body(ApiResponse(false, "Ya existe un registro con esos datos"))
         } else {
             ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
