@@ -70,7 +70,7 @@ class AuthController(
     }
 
     @PostMapping("/change-password")
-    fun changePassword(@Valid @RequestBody body: UserRequest): ResponseEntity<ApiResponse<String>> {
+    fun changePassword(@Valid @RequestBody body: ChangePasswordRequest): ResponseEntity<ApiResponse<String>> {
         authService.changePassword(body)
         return ResponseEntity.ok(ApiResponse(true, "Contraseña cambiada exitosamente"))
     }

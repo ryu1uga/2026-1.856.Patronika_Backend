@@ -9,7 +9,7 @@ import pe.edu.ulima.patronika.database.model.RefreshTokenEntity
 import pe.edu.ulima.patronika.database.repository.EmailVerificationCodeRepository
 import pe.edu.ulima.patronika.database.repository.RefreshTokenRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
-import pe.edu.ulima.patronika.dto.UserRequest
+import pe.edu.ulima.patronika.dto.ChangePasswordRequest
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
@@ -168,17 +168,13 @@ class AuthService(
     }
 
     @Transactional
-    fun changePassword(userRequest: UserRequest) {
-        val user = userRepository.findByEmail(userRequest.email)
+    fun changePassword(changePasswordRequest: ChangePasswordRequest) {
+        val user = userRepository.findByEmail(changePasswordRequest.email)
 
-        user!!.hashedPassword = hashEncoder.encode(userRequest.password)
+        user!!.hashedPassword = hashEncoder.encode(changePasswordRequest.password)
 
         userRepository.save(user)
     }
-
-    // -------------------------
-    // Helpers privados
-    // -------------------------
 
     private fun storeRefreshToken(userId: UUID, rawRefreshToken: String) {
         val hashed = hashToken(rawRefreshToken)
