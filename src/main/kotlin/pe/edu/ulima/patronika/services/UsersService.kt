@@ -31,6 +31,10 @@ class UsersService (
             throw ConflictException("Usuario ya existe")
         }
 
+        if(userRepository.findByEmail(userRequest.email) != null) {
+            throw ConflictException("El correo ya está registrado")
+        }
+
         val uploadedUrl = file?.let {
             cloudinaryService.uploadImage(it, folder = "users")
         }
@@ -54,6 +58,11 @@ class UsersService (
         req: UserRequest
     ) {
         val user = getUser(id)
+
+        val userWithSameEmail = userRepository.findByEmail(req.email)
+        if (userWithSameEmail != null && userWithSameEmail.id != id) {
+            throw ConflictException("El correo ya está registrado")
+        }
 
         user.username = req.username
         user.email = req.email
