@@ -8,7 +8,7 @@ import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.database.model.Publication
 import pe.edu.ulima.patronika.dto.PublicationRequest
 import pe.edu.ulima.patronika.services.PublicationsService
-import tools.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.UUID
 
 @RestController

@@ -35,9 +35,9 @@ class UsersService (
             throw ConflictException("El correo ya está registrado")
         }
 
-        val uploadedUrl = file?.let {
-            cloudinaryService.uploadImage(it, folder = "users")
-        }
+        val uploadedUrl = if (file != null && !file.isEmpty) {
+            cloudinaryService.uploadImage(file, folder = "users")
+        } else null
 
         val userEntity = User(
             username = userRequest.username,

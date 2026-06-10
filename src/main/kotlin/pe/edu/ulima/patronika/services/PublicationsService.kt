@@ -1,6 +1,5 @@
 package pe.edu.ulima.patronika.services
 
-import org.hibernate.query.range.Range.pattern
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.database.model.Pattern
@@ -54,7 +53,7 @@ class PublicationsService (
         )
 
         // SI VIENE UN ARCHIVO NUEVO
-        file?.let {
+        if (file != null && !file.isEmpty) {
             // 1. Si ya tenía una imagen previa en Cloudinary, la borramos
             publication.imageUrl?.let { oldUrl ->
                 if (oldUrl.contains("cloudinary.com")) {
@@ -62,8 +61,7 @@ class PublicationsService (
                 }
             }
             // 2. Subimos la nueva imagen
-            val uploadedUrl = cloudinaryService.uploadImage(it, folder = "patterns")
-            publication.imageUrl = uploadedUrl
+            publication.imageUrl = cloudinaryService.uploadImage(file, folder = "patterns")
         }
 
         return publicationRepository.save(publication)
@@ -75,11 +73,19 @@ class PublicationsService (
     file: MultipartFile?
     ) {
         val publication = getPublication(id)
-        val uploadedUrl = file?.let { cloudinaryService.uploadImage(it, folder = "patterns") }
+
+        if (file != null && !file.isEmpty) {
+            // Si ya tenía una imagen previa en Cloudinary, la borramos
+            publication.imageUrl?.let { oldUrl ->
+                if (oldUrl.contains("cloudinary.com")) {
+                    cloudinaryService.deleteImage(oldUrl)
+                }
+            }
+            publication.imageUrl = cloudinaryService.uploadImage(file, folder = "patterns")
+        }
 
         publication.description = req.description
         publication.technique = req.technique
-        publication.imageUrl = uploadedUrl
 
         publicationRepository.save(publication)
     }

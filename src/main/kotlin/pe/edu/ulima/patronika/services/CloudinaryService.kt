@@ -5,6 +5,8 @@ import com.cloudinary.utils.ObjectUtils
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
+import pe.edu.ulima.patronika.exception.BadRequestException
+import javax.imageio.ImageIO
 
 @Service
 class CloudinaryService(
@@ -21,7 +23,18 @@ class CloudinaryService(
     )
 
     fun uploadImage(file: MultipartFile, folder: String = "users"): String {
-        if (file.isEmpty) throw IllegalArgumentException("El archivo no puede estar vacío")
+        if (file.isEmpty) throw BadRequestException("El archivo no puede estar vacío")
+
+        // Validar que el contenido sea realmente una imagen decodificable
+        // (evita enviar a Cloudinary archivos/texto inválidos)
+        val isValidImage = try {
+            ImageIO.read(file.inputStream) != null
+        } catch (e: Exception) {
+            false
+        }
+        if (!isValidImage) {
+            throw BadRequestException("El archivo enviado no es una imagen válida")
+        }
 
         val options = ObjectUtils.asMap(
             "folder", folder,

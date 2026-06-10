@@ -1,6 +1,8 @@
 package pe.edu.ulima.patronika.controllers
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.validation.Valid
+import jakarta.validation.Validator
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -9,13 +11,16 @@ import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.dto.UserRequest
+import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.services.UsersService
 import java.util.UUID
 
 @RestController
 @RequestMapping("/api/users")
 class UsersController (
-    private val usersService: UsersService
+    private val usersService: UsersService,
+    private val objectMapper: ObjectMapper,
+    private val validator: Validator
 ) {
     @GetMapping
     fun loadAllUsers(): ResponseEntity<ApiResponse<List<User>>> {
@@ -31,13 +36,30 @@ class UsersController (
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun postUser(
-        @Valid @RequestPart("userRequest") userRequest: UserRequest,
+        @RequestParam("userRequest") userRequestJson: String,
         @RequestPart("file", required = false) file: MultipartFile?
     ): ResponseEntity<ApiResponse<User>> {
+        val userRequest = parseAndValidate(userRequestJson)
         val insertedUser = usersService.insertUser(userRequest, file)
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(ApiResponse(true, insertedUser))
+    }
+
+    private fun parseAndValidate(userRequestJson: String): UserRequest {
+        val userRequest = try {
+            objectMapper.readValue(userRequestJson, UserRequest::class.java)
+        } catch (e: Exception) {
+            throw BadRequestException("La parte 'userRequest' debe ser un JSON válido")
+        }
+
+        val violations = validator.validate(userRequest)
+        if (violations.isNotEmpty()) {
+            val message = violations.joinToString("; ") { "${it.propertyPath}: ${it.message}" }
+            throw BadRequestException(message)
+        }
+
+        return userRequest
     }
 
     @PutMapping("/{id}")
