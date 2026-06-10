@@ -18,7 +18,8 @@ CREATE TABLE patterns (
     user_id UUID NOT NULL REFERENCES users(id),
     name VARCHAR(255) NOT NULL,
     grid_data JSONB,
-    size INTEGER NOT NULL,
+    width INTEGER NOT NULL DEFAULT 0,
+    height INTEGER NOT NULL DEFAULT 0,
     is_public BOOLEAN NOT NULL DEFAULT FALSE,
     published_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL

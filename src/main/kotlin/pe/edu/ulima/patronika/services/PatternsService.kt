@@ -45,15 +45,16 @@ class PatternsService (
         // Procesar imagen si se subió una
         val gridData: String? = patternRequest.image?.let { img ->
             if (!img.isEmpty) {
-                imageConvolutionService.imageToGridData(img, patternRequest.size)
+                imageConvolutionService.imageToGridData(img, patternRequest.width, patternRequest.height)
             } else null
         }
 
         val pattern = Pattern(
             name = patternRequest.name,
-            size = patternRequest.size,
+            width = patternRequest.width,
+            height = patternRequest.height,
             user = user,
-            gridData = gridData  // <-- asignar resultado
+            gridData = gridData
         )
         return patternRepository.save(pattern)
     }
@@ -64,7 +65,8 @@ class PatternsService (
         val pattern = getPattern(id)
 
         pattern.name = req.name
-        pattern.size = req.size
+        pattern.width = req.width
+        pattern.height = req.height
 
         patternRepository.save(pattern)
     }

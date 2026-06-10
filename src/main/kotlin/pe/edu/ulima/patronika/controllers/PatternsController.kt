@@ -40,16 +40,19 @@ class PatternsController (
     fun createPattern(
         @RequestHeader("UserId") userId: UUID,
         @RequestPart("name") name: String,
-        @RequestPart("size") size: String,
+        @RequestPart("width") width: String,
+        @RequestPart("height") height: String,
         @RequestPart("image", required = false) image: MultipartFile?
     ): ResponseEntity<ApiResponse<Pattern>> {
-        val sizeInt = size.toIntOrNull()
-            ?: throw BadRequestException("El size debe ser un número entero")
+        val widthInt = width.toIntOrNull()
+            ?: throw BadRequestException("El width debe ser un número entero")
+        val heightInt = height.toIntOrNull()
+            ?: throw BadRequestException("El height debe ser un número entero")
 
-        if (sizeInt !in 1..100)
-            throw BadRequestException("El size debe estar entre 1 y 100")
+        if (widthInt < 1) throw BadRequestException("El width debe ser mayor a 0")
+        if (heightInt < 1) throw BadRequestException("El height debe ser mayor a 0")
 
-        val request = PatternCreateRequest(name = name, size = sizeInt, image = image)
+        val request = PatternCreateRequest(name = name, width = widthInt, height = heightInt, image = image)
         val insertedPattern = patternsService.insertPattern(userId, request)
         return ResponseEntity
             .status(HttpStatus.CREATED)

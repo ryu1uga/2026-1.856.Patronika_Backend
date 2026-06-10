@@ -104,22 +104,41 @@ class DatabaseSeeder(
 
     private fun seedPatterns(users: List<User>): List<Pattern> {
         val maria = users.first { it.username == "maria_tejidos" }
-        
+
+        val p1Width = 16
+        val p1Height = 16
+        val p2Width = 32
+        val p2Height = 24
+
         val p1 = Pattern(
             user = maria,
             name = "Oso de Peluche Amigurumi",
-            size = 0, // Small
+            width = p1Width,
+            height = p1Height,
+            gridData = generateGridData(p1Width, p1Height, "#A0522D"),
             isPublic = true,
             publishedAt = Instant.now()
         )
         val p2 = Pattern(
             user = maria,
             name = "Bufanda de Invierno",
-            size = 1, // Medium
+            width = p2Width,
+            height = p2Height,
+            gridData = generateGridData(p2Width, p2Height, "#4682B4"),
             isPublic = false
         )
 
         return patternRepository.saveAll(listOf(p1, p2))
+    }
+
+    /**
+     * Genera un gridData JSON coherente de tamaño width x height,
+     * relleno con un color base, para que coincida con las dimensiones del patrón.
+     */
+    private fun generateGridData(width: Int, height: Int, color: String): String {
+        val row = (1..width).joinToString(",") { "\"$color\"" }
+        val rows = (1..height).joinToString(",") { "[$row]" }
+        return "[$rows]"
     }
 
     private fun seedPublications(users: List<User>, patterns: List<Pattern>): List<Publication> {

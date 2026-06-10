@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
-import kotlin.math.roundToInt
 
 @Service
 class ImageConvolutionService(
@@ -13,16 +12,16 @@ class ImageConvolutionService(
 ) {
     /**
      * Convierte una imagen a gridData pixelado.
-     * @param size Porcentaje de reducción (1–100). Ej: 10 → imagen 1000x500 da grid 100x50.
+     * @param width Ancho del grid en píxeles (resolución real).
+     * @param height Alto del grid en píxeles (resolución real).
      * Retorna un JSON array 2D de colores hex: [["#RRGGBB", ...], ...]
      */
-    fun imageToGridData(file: MultipartFile, size: Int): String {
-        val percentage = size.coerceIn(1, 100)
+    fun imageToGridData(file: MultipartFile, width: Int, height: Int): String {
         val original: BufferedImage = ImageIO.read(file.inputStream)
             ?: throw IllegalArgumentException("No se pudo leer la imagen")
 
-        val gridW = maxOf(1, (original.width * percentage / 100.0).roundToInt())
-        val gridH = maxOf(1, (original.height * percentage / 100.0).roundToInt())
+        val gridW = maxOf(1, width)
+        val gridH = maxOf(1, height)
 
         val grid = downsampleWithAveraging(original, gridW, gridH)
         return objectMapper.writeValueAsString(grid)
