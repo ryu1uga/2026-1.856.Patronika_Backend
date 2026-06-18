@@ -39,21 +39,13 @@ class PatternsController (
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun createPattern(
         @RequestHeader("UserId") userId: UUID,
-        @RequestPart("name") name: String,
-        @RequestPart("width") width: String,
-        @RequestPart("height") height: String,
+        @RequestPart("request") request: PatternCreateRequest,
         @RequestPart("image", required = false) image: MultipartFile?
     ): ResponseEntity<ApiResponse<Pattern>> {
-        val widthInt = width.toIntOrNull()
-            ?: throw BadRequestException("El width debe ser un número entero")
-        val heightInt = height.toIntOrNull()
-            ?: throw BadRequestException("El height debe ser un número entero")
+        if (request.width < 1) throw BadRequestException("El width debe ser mayor a 0")
+        if (request.height < 1) throw BadRequestException("El height debe ser mayor a 0")
 
-        if (widthInt < 1) throw BadRequestException("El width debe ser mayor a 0")
-        if (heightInt < 1) throw BadRequestException("El height debe ser mayor a 0")
-
-        val request = PatternCreateRequest(name = name, width = widthInt, height = heightInt, image = image)
-        val insertedPattern = patternsService.insertPattern(userId, request)
+        val insertedPattern = patternsService.insertPattern(userId, request, image)
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(ApiResponse(true, insertedPattern))

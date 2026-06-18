@@ -36,13 +36,11 @@ class PublicationsService (
     }
 
     fun insertPublication(
-        userId: UUID,
-        patternId: UUID,
         publicationRequest: PublicationRequest,
         file: MultipartFile?
     ): Publication {
-        val user = getUser(userId)
-        val pattern = getPattern(patternId)
+        val user = getUser(publicationRequest.userId)
+        val pattern = getPattern(publicationRequest.patternId)
 
         val publication = Publication(
             description = publicationRequest.description,

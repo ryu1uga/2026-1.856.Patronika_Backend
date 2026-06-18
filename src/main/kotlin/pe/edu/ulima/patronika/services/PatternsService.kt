@@ -38,12 +38,13 @@ class PatternsService (
 
     fun insertPattern(
         userId: UUID,
-        patternRequest: PatternCreateRequest  // <-- usar el nuevo DTO
+        patternRequest: PatternCreateRequest,
+        image: MultipartFile? = null
     ): Pattern {
         val user = getUser(userId)
 
         // Procesar imagen si se subió una
-        val gridData: String? = patternRequest.image?.let { img ->
+        val gridData: String? = image?.let { img ->
             if (!img.isEmpty) {
                 imageConvolutionService.imageToGridData(img, patternRequest.width, patternRequest.height)
             } else null
