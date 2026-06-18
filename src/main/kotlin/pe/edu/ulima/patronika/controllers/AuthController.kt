@@ -1,8 +1,9 @@
 package pe.edu.ulima.patronika.controllers
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Encoding
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 import jakarta.validation.Valid
-import jakarta.validation.Validator
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -10,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.dto.*
-import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.security.AuthService
 import pe.edu.ulima.patronika.services.UsersService
 import java.util.*
@@ -20,8 +20,6 @@ import java.util.*
 class AuthController(
     private val authService: AuthService,
     private val userService: UsersService,
-    private val objectMapper: ObjectMapper,
-    private val validator: Validator
 ) {
     @PostMapping("/login")
     fun login(@Valid @RequestBody body: AuthRequest): ResponseEntity<ApiResponse<Map<String, String>>> {
@@ -60,29 +58,18 @@ class AuthController(
         "/register",
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
     )
+    @SwaggerRequestBody(
+        content = [Content(
+            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+            encoding = [Encoding(name = "userRequest", contentType = MediaType.APPLICATION_JSON_VALUE)]
+        )]
+    )
     fun register(
-        @RequestParam("userRequest") userRequestJson: String,
+        @RequestPart("userRequest") @Valid userRequest: UserRequest,
         @RequestPart("file", required = false) file: MultipartFile?
     ): ResponseEntity<ApiResponse<User>> {
-        val body = parseAndValidate(userRequestJson)
-        val result = userService.insertUser(body, file)
+        val result = userService.insertUser(userRequest, file)
         return ResponseEntity.ok(ApiResponse(true, result))
-    }
-
-    private fun parseAndValidate(userRequestJson: String): UserRequest {
-        val body = try {
-            objectMapper.readValue(userRequestJson, UserRequest::class.java)
-        } catch (e: Exception) {
-            throw BadRequestException("La parte 'userRequest' debe ser un JSON válido")
-        }
-
-        val violations = validator.validate(body)
-        if (violations.isNotEmpty()) {
-            val message = violations.joinToString("; ") { "${it.propertyPath}: ${it.message}" }
-            throw BadRequestException(message)
-        }
-
-        return body
     }
 
     @PostMapping("/change-password/request-code")
