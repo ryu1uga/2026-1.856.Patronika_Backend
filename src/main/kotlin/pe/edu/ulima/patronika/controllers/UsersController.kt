@@ -1,5 +1,8 @@
 package pe.edu.ulima.patronika.controllers
 
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Encoding
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -30,6 +33,12 @@ class UsersController (
     }
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @SwaggerRequestBody(
+        content = [Content(
+            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+            encoding = [Encoding(name = "userRequest", contentType = MediaType.APPLICATION_JSON_VALUE)]
+        )]
+    )
     fun postUser(
         @RequestPart("userRequest") @Valid userRequest: UserRequest,
         @RequestPart("file", required = false) file: MultipartFile?

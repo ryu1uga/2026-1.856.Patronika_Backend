@@ -1,5 +1,8 @@
 package pe.edu.ulima.patronika.controllers
 
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Encoding
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -29,6 +32,12 @@ class PublicationsController (
     }
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @SwaggerRequestBody(
+        content = [Content(
+            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+            encoding = [Encoding(name = "publication", contentType = MediaType.APPLICATION_JSON_VALUE)]
+        )]
+    )
     fun postPublication(
         @RequestPart("publication") publicationRequest: PublicationRequest,
         @RequestPart("file", required = false) file: MultipartFile?
@@ -38,6 +47,12 @@ class PublicationsController (
     }
 
     @PutMapping("/{id}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @SwaggerRequestBody(
+        content = [Content(
+            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+            encoding = [Encoding(name = "publication", contentType = MediaType.APPLICATION_JSON_VALUE)]
+        )]
+    )
     fun putPublication(
         @PathVariable id: UUID,
         @RequestPart("publication") publicationRequest: PublicationRequest,

@@ -1,4 +1,7 @@
 package pe.edu.ulima.patronika.controllers
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Encoding
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -37,6 +40,12 @@ class PatternsController (
     }
 
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @SwaggerRequestBody(
+        content = [Content(
+            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+            encoding = [Encoding(name = "request", contentType = MediaType.APPLICATION_JSON_VALUE)]
+        )]
+    )
     fun createPattern(
         @RequestHeader("UserId") userId: UUID,
         @RequestPart("request") request: PatternCreateRequest,
