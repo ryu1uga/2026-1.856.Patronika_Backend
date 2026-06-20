@@ -5,4 +5,5 @@ import pe.edu.ulima.patronika.database.model.Publication
 import java.util.UUID
 
 interface PublicationRepository: JpaRepository<Publication, UUID> {
+    fun findAllByOrderByPublishedAtDesc(): List<Publication>
 }

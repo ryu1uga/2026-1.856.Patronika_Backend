@@ -9,6 +9,8 @@ import pe.edu.ulima.patronika.database.repository.PatternRepository
 import pe.edu.ulima.patronika.database.repository.PublicationRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.PublicationRequest
+import pe.edu.ulima.patronika.dto.PublicationResponseDto
+import pe.edu.ulima.patronika.dto.UserSummaryDto
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import java.util.UUID
@@ -21,9 +23,28 @@ class PublicationsService (
     private val patternRepository: PatternRepository,
     private val cloudinaryService: CloudinaryService
 ) {
-    fun getAll(): List<Publication> = publicationRepository.findAll()
+    private fun Publication.toDto() = PublicationResponseDto(
+        id = id,
+        user = UserSummaryDto(
+            id = user.id,
+            username = user.username,
+            profileImageUrl = user.profileImageUrl
+        ),
+        patternId = pattern.id,
+        description = description,
+        technique = technique,
+        imageUrl = imageUrl,
+        publishedAt = publishedAt
+    )
 
-    fun getPublication(id: UUID): Publication {
+    fun getAll(): List<PublicationResponseDto> =
+        publicationRepository.findAllByOrderByPublishedAtDesc().map { it.toDto() }
+
+    fun getPublication(id: UUID): PublicationResponseDto {
+        return publicationRepository.findById(id).orElseThrow { NotFoundException() }.toDto()
+    }
+
+    private fun getPublicationEntity(id: UUID): Publication {
         return publicationRepository.findById(id).orElseThrow { NotFoundException() }
     }
 
@@ -38,7 +59,7 @@ class PublicationsService (
     fun insertPublication(
         publicationRequest: PublicationRequest,
         file: MultipartFile?
-    ): Publication {
+    ): PublicationResponseDto {
         val user = getUser(publicationRequest.userId)
         val pattern = getPattern(publicationRequest.patternId)
 
@@ -62,7 +83,7 @@ class PublicationsService (
             publication.imageUrl = cloudinaryService.uploadImage(file, folder = "patterns")
         }
 
-        return publicationRepository.save(publication)
+        return publicationRepository.save(publication).toDto()
     }
 
     fun updatePublication(
@@ -70,7 +91,7 @@ class PublicationsService (
     req: PublicationRequest,
     file: MultipartFile?
     ) {
-        val publication = getPublication(id)
+        val publication = getPublicationEntity(id)
 
         if (file != null && !file.isEmpty) {
             // Si ya tenía una imagen previa en Cloudinary, la borramos
@@ -89,7 +110,7 @@ class PublicationsService (
     }
 
     fun deletePublication(id: UUID) {
-        val publication = getPublication(id) // Usamos getPublication para asegurar que existe y obtener sus datos
+        val publication = getPublicationEntity(id)
         publicationRepository.delete(publication)
     }
 }

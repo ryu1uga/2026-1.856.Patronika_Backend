@@ -1,15 +1,13 @@
 package pe.edu.ulima.patronika.controllers
 
-import jakarta.persistence.Id
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pe.edu.ulima.patronika.ApiResponse
-import pe.edu.ulima.patronika.database.model.Comment
 import pe.edu.ulima.patronika.dto.CommentRequest
+import pe.edu.ulima.patronika.dto.CommentResponseDto
 import pe.edu.ulima.patronika.services.CommentsService
-import pe.edu.ulima.patronika.services.TutorialProgressesService
 import java.util.UUID
 
 @RestController
@@ -18,13 +16,13 @@ class CommentsController (
     private val commentsService: CommentsService
 ) {
     @GetMapping
-    fun loadAllComments(): ResponseEntity<ApiResponse<List<Comment>>> {
+    fun loadAllComments(): ResponseEntity<ApiResponse<List<CommentResponseDto>>> {
         val comments = commentsService.getAll()
         return ResponseEntity.ok(ApiResponse(true, comments))
     }
 
     @GetMapping("/{id}")
-    fun loadComment(@PathVariable id: UUID): ResponseEntity<ApiResponse<Comment>> {
+    fun loadComment(@PathVariable id: UUID): ResponseEntity<ApiResponse<CommentResponseDto>> {
         val comment = commentsService.getComment(id)
         return ResponseEntity.ok(ApiResponse(true, comment))
     }
@@ -33,7 +31,7 @@ class CommentsController (
     fun postComment(
         @RequestHeader("UserId") userId: UUID,
         @Valid @RequestBody commentRequest: CommentRequest
-    ): ResponseEntity<ApiResponse<Comment>> {
+    ): ResponseEntity<ApiResponse<CommentResponseDto>> {
         val insertedComment = commentsService.insertComment(userId, commentRequest)
         return ResponseEntity
             .status(HttpStatus.CREATED)

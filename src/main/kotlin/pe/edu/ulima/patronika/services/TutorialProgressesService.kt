@@ -6,6 +6,7 @@ import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.database.repository.TutorialProgressRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.TutorialProgressRequest
+import pe.edu.ulima.patronika.dto.TutorialProgressResponseDto
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import java.time.LocalDate
@@ -16,9 +17,22 @@ class TutorialProgressesService (
     private val tutorialProgressRepository: TutorialProgressRepository,
     private val userRepository: UserRepository
 ) {
-    fun getAll(): List<TutorialProgress> = tutorialProgressRepository.findAll()
+    private fun TutorialProgress.toDto() = TutorialProgressResponseDto(
+        id = id,
+        userId = user.id,
+        tutorialId = tutorial.id,
+        status = status,
+        registeredDate = registeredDate
+    )
 
-    fun getTutorialProgress(id: UUID): TutorialProgress {
+    fun getAll(): List<TutorialProgressResponseDto> =
+        tutorialProgressRepository.findAll().map { it.toDto() }
+
+    fun getTutorialProgress(id: UUID): TutorialProgressResponseDto {
+        return tutorialProgressRepository.findById(id).orElseThrow { NotFoundException() }.toDto()
+    }
+
+    private fun getTutorialProgressEntity(id: UUID): TutorialProgress {
         return tutorialProgressRepository.findById(id).orElseThrow { NotFoundException() }
     }
 
@@ -29,7 +43,7 @@ class TutorialProgressesService (
     fun insertTutorialProgress(
         userId: UUID,
         tutorialProgressRequest: TutorialProgressRequest
-    ): TutorialProgress {
+    ): TutorialProgressResponseDto {
         val user = getUser(userId)
 
         val tutorialProgress = TutorialProgress(
@@ -37,14 +51,14 @@ class TutorialProgressesService (
             status = tutorialProgressRequest.status
         )
 
-        return tutorialProgressRepository.save(tutorialProgress)
+        return tutorialProgressRepository.save(tutorialProgress).toDto()
     }
 
     fun updateTutorialProgress(
         id: UUID,
         req: TutorialProgressRequest
     ) {
-        val tutorialProgress = getTutorialProgress(id)
+        val tutorialProgress = getTutorialProgressEntity(id)
 
         tutorialProgress.status = req.status
 

@@ -19,6 +19,7 @@ class User (
     var email: String = "",
 
     @Column(nullable = false)
+    @JsonIgnore
     var hashedPassword: String = "",
 
     @Column(name = "profile_image_url")

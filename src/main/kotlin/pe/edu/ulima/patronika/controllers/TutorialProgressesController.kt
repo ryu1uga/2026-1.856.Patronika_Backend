@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pe.edu.ulima.patronika.ApiResponse
-import pe.edu.ulima.patronika.database.model.TutorialProgress
 import pe.edu.ulima.patronika.dto.TutorialProgressRequest
+import pe.edu.ulima.patronika.dto.TutorialProgressResponseDto
 import pe.edu.ulima.patronika.services.TutorialProgressesService
 import java.util.UUID
 
@@ -16,13 +16,13 @@ class TutorialProgressesController (
     private val tutorialProgressesService: TutorialProgressesService
 ) {
     @GetMapping
-    fun loadAllTutorialProgresses(): ResponseEntity<ApiResponse<List<TutorialProgress>>> {
+    fun loadAllTutorialProgresses(): ResponseEntity<ApiResponse<List<TutorialProgressResponseDto>>> {
         val tutorialProgresses = tutorialProgressesService.getAll()
         return ResponseEntity.ok(ApiResponse(true, tutorialProgresses))
     }
 
     @GetMapping("/{id}")
-    fun loadTutorialProgress(@PathVariable id: UUID): ResponseEntity<ApiResponse<TutorialProgress>> {
+    fun loadTutorialProgress(@PathVariable id: UUID): ResponseEntity<ApiResponse<TutorialProgressResponseDto>> {
         val tutorialProgress = tutorialProgressesService.getTutorialProgress(id)
         return ResponseEntity.ok(ApiResponse(true, tutorialProgress))
     }
@@ -31,7 +31,7 @@ class TutorialProgressesController (
     fun postTutorialProgress(
         @RequestHeader("UserId") userId: UUID,
         @Valid @RequestBody tutorialProgressRequest: TutorialProgressRequest
-    ): ResponseEntity<ApiResponse<TutorialProgress>> {
+    ): ResponseEntity<ApiResponse<TutorialProgressResponseDto>> {
         val insertedTutorialProgress = tutorialProgressesService.insertTutorialProgress(userId, tutorialProgressRequest)
         return ResponseEntity
             .status(HttpStatus.CREATED)

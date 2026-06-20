@@ -8,6 +8,7 @@ import pe.edu.ulima.patronika.database.repository.PatternRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.PatternCreateRequest
 import pe.edu.ulima.patronika.dto.PatternRequest
+import pe.edu.ulima.patronika.dto.PatternResponseDto
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import java.util.UUID
@@ -18,17 +19,34 @@ class PatternsService (
     private val userRepository: UserRepository,
     private val imageConvolutionService: ImageConvolutionService
 ) {
-    fun getAll(): List<Pattern> = patternRepository.findAll()
+    private fun Pattern.toDto() = PatternResponseDto(
+        id = id,
+        userId = user.id,
+        name = name,
+        gridData = gridData,
+        width = width,
+        height = height,
+        isPublic = isPublic,
+        publishedAt = publishedAt,
+        createdAt = createdAt
+    )
 
-    fun getAllByUserId(userId: UUID): List<Pattern> {
+    fun getAll(): List<PatternResponseDto> =
+        patternRepository.findAllByOrderByCreatedAtDesc().map { it.toDto() }
+
+    fun getAllByUserId(userId: UUID): List<PatternResponseDto> {
         if (!userRepository.existsById(userId)) {
             throw BadRequestException("Usuario no registrado")
         }
 
-        return patternRepository.findAllByUserId(userId)
+        return patternRepository.findAllByUserIdOrderByCreatedAtDesc(userId).map { it.toDto() }
     }
 
-    fun getPattern(id: UUID): Pattern {
+    fun getPattern(id: UUID): PatternResponseDto {
+        return patternRepository.findById(id).orElseThrow { NotFoundException() }.toDto()
+    }
+
+    fun getPatternEntity(id: UUID): Pattern {
         return patternRepository.findById(id).orElseThrow { NotFoundException() }
     }
 
@@ -40,7 +58,7 @@ class PatternsService (
         userId: UUID,
         patternRequest: PatternCreateRequest,
         image: MultipartFile? = null
-    ): Pattern {
+    ): PatternResponseDto {
         val user = getUser(userId)
 
         // Procesar imagen si se subió una
@@ -57,13 +75,13 @@ class PatternsService (
             user = user,
             gridData = gridData
         )
-        return patternRepository.save(pattern)
+        return patternRepository.save(pattern).toDto()
     }
     fun updatePattern(
         id: UUID,
         req: PatternRequest
     ) {
-        val pattern = getPattern(id)
+        val pattern = getPatternEntity(id)
 
         pattern.name = req.name
         pattern.width = req.width
@@ -75,5 +93,10 @@ class PatternsService (
     fun deletePattern(id: UUID) {
         if (!patternRepository.existsById(id)) throw NotFoundException()
         patternRepository.deleteById(id)
+    }
+
+    fun getPatternsOfUser(userId: UUID): List<Pattern> {
+        if (!userRepository.existsById(userId)) throw BadRequestException("Usuario no registrado")
+        return patternRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
     }
 }
