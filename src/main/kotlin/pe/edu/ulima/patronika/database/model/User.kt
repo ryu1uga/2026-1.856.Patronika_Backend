@@ -1,6 +1,7 @@
 package pe.edu.ulima.patronika.database.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.persistence.*
 import java.time.LocalDate
 import java.util.*
@@ -26,6 +27,7 @@ class User (
     var profileImageUrl: String? = null,
 
     @Column(nullable = false)
+    @get:JsonProperty("isAdmin")
     var isAdmin: Boolean = false,
 
     @Column(name = "logged_in", nullable = false)
