@@ -4,9 +4,11 @@ import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.database.model.Pattern
 import pe.edu.ulima.patronika.database.model.Publication
+import pe.edu.ulima.patronika.database.model.PublishedPattern
 import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.database.repository.PatternRepository
 import pe.edu.ulima.patronika.database.repository.PublicationRepository
+import pe.edu.ulima.patronika.database.repository.PublishedPatternRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.PublicationRequest
 import pe.edu.ulima.patronika.dto.PublicationResponseDto
@@ -21,7 +23,8 @@ class PublicationsService (
     private val publicationRepository: PublicationRepository,
     private val userRepository: UserRepository,
     private val patternRepository: PatternRepository,
-    private val cloudinaryService: CloudinaryService
+    private val cloudinaryService: CloudinaryService,
+    private val publishedPatternRepository: PublishedPatternRepository
 ) {
     private fun Publication.toDto() = PublicationResponseDto(
         id = id,
@@ -83,7 +86,16 @@ class PublicationsService (
             publication.imageUrl = cloudinaryService.uploadImage(file, folder = "patterns")
         }
 
-        return publicationRepository.save(publication).toDto()
+        val saved = publicationRepository.save(publication)
+
+        // Registrar en published_patterns si aún no existe esta combinación
+        if (!publishedPatternRepository.existsByUserIdAndPatternId(user.id!!, pattern.id!!)) {
+            publishedPatternRepository.save(
+                PublishedPattern(user = user, pattern = pattern, publishedAt = saved.publishedAt ?: Instant.now())
+            )
+        }
+
+        return saved.toDto()
     }
 
     fun updatePublication(

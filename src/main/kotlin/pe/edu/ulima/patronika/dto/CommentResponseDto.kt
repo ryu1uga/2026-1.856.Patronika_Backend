@@ -8,6 +8,7 @@ data class CommentResponseDto(
     val userId: UUID?,
     val publicationId: UUID?,
     val content: String,
+    val reportCount: Int,
     val createdAt: Instant,
     val updatedAt: Instant?
 )

@@ -25,6 +25,7 @@ class CommentsService (
         userId = user.id,
         publicationId = publication.id,
         content = content,
+        reportCount = reportCount,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -75,6 +76,12 @@ class CommentsService (
         comment.updatedAt = Instant.now()
 
         commentRepository.save(comment)
+    }
+
+    fun reportComment(id: UUID): CommentResponseDto {
+        val comment = getCommentEntity(id)
+        comment.reportCount += 1
+        return commentRepository.save(comment).toDto()
     }
 
     fun deleteComment(id: UUID) {
