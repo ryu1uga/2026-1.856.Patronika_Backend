@@ -4,6 +4,7 @@ plugins {
 	id("org.springframework.boot") version "4.0.5"
 	id("io.spring.dependency-management") version "1.1.7"
 	kotlin("plugin.jpa") version "2.2.21"
+	id("info.solidsoft.pitest") version "1.19.0"
 }
 
 group = "pe.edu.ulima"
@@ -24,6 +25,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 
 	runtimeOnly("org.postgresql:postgresql")
 	implementation("org.springframework.boot:spring-boot-starter-web")
@@ -62,4 +64,19 @@ allOpen {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+pitest {
+	junit5PluginVersion.set("1.2.3")
+	targetClasses.set(setOf("pe.edu.ulima.patronika.*"))
+	targetTests.set(setOf(
+		"pe.edu.ulima.patronika.services.ImageConvolutionServiceTest",
+		"pe.edu.ulima.patronika.security.JwtServiceTest",
+		"pe.edu.ulima.patronika.services.UsersServiceTest",
+		"pe.edu.ulima.patronika.security.AuthServiceTest"
+	))
+	mutators.set(setOf("DEFAULTS"))
+	outputFormats.set(setOf("HTML"))
+	timestampedReports.set(false)
+	threads.set(4)
 }
