@@ -18,9 +18,6 @@ class Tutorial (
     var description: String = "",
 
     @Column(nullable = false)
-    var difficulty: Int = 0, //0 for basic, 1 for intermediate, 2 for advanced
-
-    @Column(nullable = false)
     var url: String = "",
 ) {
     @OneToMany(mappedBy = "tutorial", cascade = [CascadeType.ALL], orphanRemoval = true)

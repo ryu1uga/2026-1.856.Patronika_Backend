@@ -83,19 +83,16 @@ class DatabaseSeeder(
         val t1 = Tutorial(
             title = "Introducción al Crochet",
             description = "Aprende los puntos básicos para empezar tus proyectos de crochet.",
-            difficulty = 0, // Básico
             url = "https://www.youtube.com/watch?v=crochet-basico"
         )
         val t2 = Tutorial(
             title = "Técnicas de Dos Agujas",
             description = "Domina el arte del tejido a dos agujas desde cero.",
-            difficulty = 1, // Intermedio
             url = "https://www.youtube.com/watch?v=dos-agujas"
         )
         val t3 = Tutorial(
             title = "Taller de Amigurumis Avanzado",
             description = "Crea figuras complejas y detalladas con estas técnicas avanzadas.",
-            difficulty = 2, // Avanzado
             url = "https://www.youtube.com/watch?v=amigurumi-pro"
         )
 

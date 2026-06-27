@@ -27,7 +27,6 @@ class TutorialsService (
         val tutorial = Tutorial(
             title = tutorialRequest.title,
             description = tutorialRequest.description,
-            difficulty = tutorialRequest.difficulty,
             url = tutorialRequest.url
         )
 
@@ -42,7 +41,6 @@ class TutorialsService (
 
         tutorial.title = req.title
         tutorial.description = req.description
-        tutorial.difficulty = req.difficulty
         tutorial.url = req.url
 
         tutorialRepository.save(tutorial)
