@@ -15,6 +15,7 @@ import pe.edu.ulima.patronika.dto.PublicationResponseDto
 import pe.edu.ulima.patronika.dto.UserSummaryDto
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.NotFoundException
+import pe.edu.ulima.patronika.exception.UnauthorizedException
 import java.util.UUID
 import java.time.Instant
 
@@ -24,7 +25,8 @@ class PublicationsService (
     private val userRepository: UserRepository,
     private val patternRepository: PatternRepository,
     private val cloudinaryService: CloudinaryService,
-    private val publishedPatternRepository: PublishedPatternRepository
+    private val publishedPatternRepository: PublishedPatternRepository,
+    private val emailService: EmailService
 ) {
     private fun Publication.toDto() = PublicationResponseDto(
         id = id,
@@ -37,7 +39,8 @@ class PublicationsService (
         description = description,
         technique = technique,
         imageUrl = imageUrl,
-        publishedAt = publishedAt
+        publishedAt = publishedAt,
+        reportCount = reportCount
     )
 
     fun getAll(): List<PublicationResponseDto> =
@@ -124,5 +127,24 @@ class PublicationsService (
     fun deletePublication(id: UUID) {
         val publication = getPublicationEntity(id)
         publicationRepository.delete(publication)
+    }
+
+    fun adminDeletePublication(id: UUID, adminId: UUID, reason: String) {
+        val admin = userRepository.findById(adminId).orElseThrow { BadRequestException("Admin no encontrado") }
+        if (admin.isAdmin != true) throw UnauthorizedException()
+
+        val publication = getPublicationEntity(id)
+        val ownerEmail = publication.user.email
+        val ownerUsername = publication.user.username
+
+        publicationRepository.delete(publication)
+
+        emailService.sendPublicationDeletedEmail(ownerEmail, ownerUsername, reason)
+    }
+
+    fun reportPublication(id: UUID) {
+        val publication = getPublicationEntity(id)
+        publication.reportCount++
+        publicationRepository.save(publication)
     }
 }

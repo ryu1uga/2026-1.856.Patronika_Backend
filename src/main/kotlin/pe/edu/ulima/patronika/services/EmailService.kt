@@ -10,6 +10,47 @@ class EmailService(
     private val mailSender: JavaMailSender,
     @Value("\${app.email.from}") private val fromAddress: String
 ) {
+    fun sendPublicationDeletedEmail(toEmail: String, username: String, reason: String) {
+        val message = mailSender.createMimeMessage()
+        val helper = MimeMessageHelper(message, true, "UTF-8")
+
+        helper.setFrom(fromAddress)
+        helper.setTo(toEmail)
+        helper.setSubject("Tu publicación ha sido eliminada - Patronika")
+        helper.setText(
+            """
+            <h2>Hola, $username</h2>
+            <p>Tu publicación ha sido eliminada por un administrador de Patronika.</p>
+            <p><strong>Motivo:</strong> $reason</p>
+            <p>Si tienes alguna consulta, contacta al soporte.</p>
+            """.trimIndent(),
+            true
+        )
+
+        mailSender.send(message)
+    }
+
+    fun sendSuspensionEmail(toEmail: String, username: String, reason: String, days: Int, endDate: java.time.LocalDate) {
+        val message = mailSender.createMimeMessage()
+        val helper = MimeMessageHelper(message, true, "UTF-8")
+
+        helper.setFrom(fromAddress)
+        helper.setTo(toEmail)
+        helper.setSubject("Tu cuenta ha sido suspendida - Patronika")
+        helper.setText(
+            """
+            <h2>Hola, $username</h2>
+            <p>Tu cuenta en Patronika ha sido suspendida por <strong>$days día(s)</strong>.</p>
+            <p><strong>Motivo:</strong> $reason</p>
+            <p><strong>Fecha de fin de suspensión:</strong> $endDate</p>
+            <p>Si consideras que esto es un error, contacta al soporte.</p>
+            """.trimIndent(),
+            true
+        )
+
+        mailSender.send(message)
+    }
+
     fun sendVerificationCode(toEmail: String, code: String) {
         val message = mailSender.createMimeMessage()
         val helper = MimeMessageHelper(message, true, "UTF-8")

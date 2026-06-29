@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
+import pe.edu.ulima.patronika.dto.DeletePublicationRequest
 import pe.edu.ulima.patronika.dto.PublicationRequest
 import pe.edu.ulima.patronika.dto.PublicationResponseDto
 import pe.edu.ulima.patronika.services.PublicationsService
@@ -63,8 +64,23 @@ class PublicationsController (
     }
 
     @DeleteMapping("/{id}")
-    fun deletePublication(@PathVariable id: UUID) : ResponseEntity<ApiResponse<String>> {
+    fun deletePublication(@PathVariable id: UUID): ResponseEntity<ApiResponse<String>> {
         publicationsService.deletePublication(id)
         return ResponseEntity.ok(ApiResponse(true, "Publicación eliminada exitosamente"))
+    }
+
+    @DeleteMapping("/{id}/admin")
+    fun adminDeletePublication(
+        @PathVariable id: UUID,
+        @RequestBody body: DeletePublicationRequest
+    ): ResponseEntity<ApiResponse<String>> {
+        publicationsService.adminDeletePublication(id, body.adminId, body.reason)
+        return ResponseEntity.ok(ApiResponse(true, "Publicación eliminada exitosamente"))
+    }
+
+    @PostMapping("/{id}/report")
+    fun reportPublication(@PathVariable id: UUID): ResponseEntity<ApiResponse<String>> {
+        publicationsService.reportPublication(id)
+        return ResponseEntity.ok(ApiResponse(true, "Publicación reportada"))
     }
 }

@@ -9,13 +9,16 @@ import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
 import pe.edu.ulima.patronika.security.HashEncoder
+import pe.edu.ulima.patronika.services.EmailService
+import java.time.LocalDate
 import java.util.UUID
 
 @Service
 class UsersService (
     private val userRepository: UserRepository,
     private val hashEncoder: HashEncoder,
-    private val cloudinaryService: CloudinaryService
+    private val cloudinaryService: CloudinaryService,
+    private val emailService: EmailService
 ) {
     fun getAll(): List<User> = userRepository.findAll()
 
@@ -55,7 +58,7 @@ class UsersService (
 
     fun updateUser(
         id: UUID,
-        req: UserRequest
+        req: UserUpdateRequest
     ) {
         val user = getUser(id)
 
@@ -66,10 +69,9 @@ class UsersService (
 
         user.username = req.username
         user.email = req.email
-        user.isAdmin = req.isAdmin
-        user.status = req.status
-        user.activateNotification = req.activateNotification
-        user.suspensionEndDate = req.suspensionEndDate
+        req.isAdmin?.let { user.isAdmin = it }
+        req.status?.let { user.status = it }
+        req.suspensionEndDate.let { user.suspensionEndDate = it }
 
         userRepository.save(user)
     }
@@ -90,17 +92,26 @@ class UsersService (
         return userRepository.save(user)
     }
 
-    fun deleteUser(
-        username: String,
-        userId: UUID
-    ) {
-        val userAdmin = getUser(userId)
-
-        if(userAdmin.isAdmin != true) throw UnauthorizedException()
-
-        val user = userRepository.findByUsername(username)
-            ?: throw NotFoundException()
-
+    fun deleteUser(targetId: UUID) {
+        val user = userRepository.findById(targetId).orElseThrow { NotFoundException() }
         userRepository.delete(user)
+    }
+
+    fun suspendUser(adminId: UUID, targetId: UUID, days: Int, reason: String) {
+        val admin = getUser(adminId)
+        if (admin.isAdmin != true) throw UnauthorizedException()
+
+        val target = getUser(targetId)
+        target.status = 1
+        target.suspensionEndDate = LocalDate.now().plusDays(days.toLong())
+        userRepository.save(target)
+
+        emailService.sendSuspensionEmail(
+            toEmail = target.email,
+            username = target.username,
+            reason = reason,
+            days = days,
+            endDate = target.suspensionEndDate!!
+        )
     }
 }

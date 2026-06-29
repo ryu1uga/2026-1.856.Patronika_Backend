@@ -10,5 +10,6 @@ data class PublicationResponseDto(
     val description: String,
     val technique: Int,
     val imageUrl: String?,
-    val publishedAt: Instant?
+    val publishedAt: Instant?,
+    val reportCount: Int
 )
