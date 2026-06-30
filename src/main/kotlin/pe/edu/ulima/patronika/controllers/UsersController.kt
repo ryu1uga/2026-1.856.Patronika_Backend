@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.dto.SuspendUserRequest
+import pe.edu.ulima.patronika.dto.UserChangePasswordRequest
 import pe.edu.ulima.patronika.dto.UserRequest
 import pe.edu.ulima.patronika.dto.UserUpdateRequest
 import pe.edu.ulima.patronika.services.UsersService
@@ -76,6 +77,14 @@ class UsersController (
     fun deleteUser(@PathVariable id: UUID): ResponseEntity<ApiResponse<String>> {
         usersService.deleteUser(id)
         return ResponseEntity.ok(ApiResponse(true, "Usuario eliminado satisfactoriamente"))
+    }
+
+    @PostMapping("/change-password")
+    fun changePassword(
+        @Valid @RequestBody body: UserChangePasswordRequest
+    ): ResponseEntity<ApiResponse<String>> {
+        usersService.changePassword(body)
+        return ResponseEntity.ok(ApiResponse(true, "Contraseña actualizada exitosamente"))
     }
 
     @PostMapping("/{id}/suspend")

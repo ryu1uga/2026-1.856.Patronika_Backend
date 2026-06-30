@@ -1,4 +1,4 @@
-package pe.edu.ulima.patronika.services
+package pe.edu.ulima.Patrónika.services
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.javamail.JavaMailSender
@@ -16,11 +16,11 @@ class EmailService(
 
         helper.setFrom(fromAddress)
         helper.setTo(toEmail)
-        helper.setSubject("Tu publicación ha sido eliminada - Patronika")
+        helper.setSubject("Tu publicación ha sido eliminada - Patrónika")
         helper.setText(
             """
             <h2>Hola, $username</h2>
-            <p>Tu publicación ha sido eliminada por un administrador de Patronika.</p>
+            <p>Tu publicación ha sido eliminada por un administrador de Patrónika.</p>
             <p><strong>Motivo:</strong> $reason</p>
             <p>Si tienes alguna consulta, contacta al soporte.</p>
             """.trimIndent(),
@@ -36,11 +36,11 @@ class EmailService(
 
         helper.setFrom(fromAddress)
         helper.setTo(toEmail)
-        helper.setSubject("Tu cuenta ha sido suspendida - Patronika")
+        helper.setSubject("Tu cuenta ha sido suspendida - Patrónika")
         helper.setText(
             """
             <h2>Hola, $username</h2>
-            <p>Tu cuenta en Patronika ha sido suspendida por <strong>$days día(s)</strong>.</p>
+            <p>Tu cuenta en Patrónika ha sido suspendida por <strong>$days día(s)</strong>.</p>
             <p><strong>Motivo:</strong> $reason</p>
             <p><strong>Fecha de fin de suspensión:</strong> $endDate</p>
             <p>Si consideras que esto es un error, contacta al soporte.</p>
@@ -57,7 +57,7 @@ class EmailService(
 
         helper.setFrom(fromAddress)
         helper.setTo(toEmail)
-        helper.setSubject("Tu código de verificación - Patronika")
+        helper.setSubject("Tu código de verificación - Patrónika")
         helper.setText(
             """
             <h2>Verificación de correo</h2>

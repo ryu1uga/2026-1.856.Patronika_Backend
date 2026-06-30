@@ -5,6 +5,7 @@ import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.*
+import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
@@ -62,13 +63,22 @@ class UsersService (
     ) {
         val user = getUser(id)
 
-        val userWithSameEmail = userRepository.findByEmail(req.email)
-        if (userWithSameEmail != null && userWithSameEmail.id != id) {
-            throw ConflictException("El correo ya está registrado")
+        if (req.username != null) {
+            val userWithSameUsername = userRepository.findByUsername(req.username)
+            if (userWithSameUsername != null && userWithSameUsername.id != id) {
+                throw ConflictException("Ese nombre de usuario ya existe, por favor elige otro")
+            }
+            user.username = req.username
         }
 
-        user.username = req.username
-        user.email = req.email
+        if (req.email != null) {
+            val userWithSameEmail = userRepository.findByEmail(req.email)
+            if (userWithSameEmail != null && userWithSameEmail.id != id) {
+                throw ConflictException("Ese correo ya existe, por favor elige otro")
+            }
+            user.email = req.email
+        }
+
         req.isAdmin?.let { user.isAdmin = it }
         req.status?.let { user.status = it }
         req.suspensionEndDate.let { user.suspensionEndDate = it }
@@ -90,6 +100,17 @@ class UsersService (
         user.profileImageUrl = uploadedUrl
 
         return userRepository.save(user)
+    }
+
+    fun changePassword(req: UserChangePasswordRequest) {
+        val user = getUser(req.userId)
+
+        if (!hashEncoder.matches(req.currentPassword, user.hashedPassword)) {
+            throw BadRequestException("La contraseña actual es incorrecta")
+        }
+
+        user.hashedPassword = hashEncoder.encode(req.newPassword)
+        userRepository.save(user)
     }
 
     fun deleteUser(targetId: UUID) {
