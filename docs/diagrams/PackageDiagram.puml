@@ -1,0 +1,99 @@
+@startuml PackageDiagram
+skinparam packageStyle rectangle
+skinparam monochrome true
+skinparam shadowing false
+
+package "pe.edu.ulima.patronika" {
+
+    package "controllers" {
+        class AuthController
+        class UsersController
+        class PatternsController
+        class PublicationsController
+        class CommentsController
+        class TutorialsController
+        class TutorialProgressesController
+        class PatternLibraryController
+        class PublishedPatternsController
+    }
+
+    package "services" {
+        class UsersService
+        class PatternsService
+        class PublicationsService
+        class CommentsService
+        class TutorialsService
+        class TutorialProgressesService
+        class PatternLibraryService
+        class EmailService
+        class CloudinaryService
+        class ImageConvolutionService
+    }
+
+    package "security" {
+        class AuthService
+        class JwtService
+        class JwtAuthFilter
+        class HashEncoder
+        class SecurityConfig
+    }
+
+    package "database" {
+        package "model" {
+            class User
+            class Pattern
+            class Publication
+            class Comment
+            class Tutorial
+            class TutorialProgress
+            class PatternLibrary
+            class PublishedPattern
+            class RefreshTokenEntity
+            class EmailVerificationCodeEntity
+        }
+
+        package "repository" {
+            interface UserRepository
+            interface PatternRepository
+            interface PublicationRepository
+            interface CommentRepository
+            interface TutorialRepository
+            interface TutorialProgressRepository
+            interface PatternLibraryRepository
+            interface PublishedPatternRepository
+            interface RefreshTokenRepository
+            interface EmailVerificationCodeRepository
+        }
+    }
+
+    package "dto" {
+        note "Request / Response DTOs" as dtoNote
+    }
+
+    package "config" {
+        class ObjectMapperConfig
+        class OpenApiConfig
+    }
+
+    package "exception" {
+        class BadRequestException
+        class ConflictException
+        class UnauthorizedException
+        class GlobalExceptionHandler
+    }
+
+    package "ratelimit" {
+        class RateLimitFilter
+    }
+}
+
+controllers ..> services : usa
+controllers ..> security : usa
+security ..> repository : usa
+security ..> services : usa
+services ..> repository : usa
+repository ..> model : gestiona
+controllers ..> dto : usa
+services ..> dto : usa
+
+@enduml

@@ -1,0 +1,31 @@
+@startuml DeploymentDiagram
+skinparam monochrome true
+skinparam shadowing false
+
+node "Dispositivo Cliente" {
+    artifact "Aplicación Frontend\n(Browser / Mobile)" as Frontend
+}
+
+node "Servidor de Aplicación" {
+    artifact "Spring Boot\n(Kotlin · JVM 21)\nPuerto 8080" as SpringBoot
+    artifact "Spring Security\n+ JWT Auth Filter" as Security
+    SpringBoot -- Security
+}
+
+node "Servidor de Base de Datos" {
+    database "PostgreSQL\nPuerto 5432" as PostgreSQL
+    artifact "Flyway\n(Migraciones automáticas)" as Flyway
+    Flyway --> PostgreSQL
+}
+
+node "Servicios Externos" {
+    artifact "Cloudinary\n(CDN de Imágenes)" as Cloudinary
+    artifact "Servidor SMTP\n(Correo electrónico)" as SMTP
+}
+
+Frontend --> SpringBoot : HTTPS / REST
+SpringBoot --> PostgreSQL : JDBC / TCP
+SpringBoot --> Cloudinary : HTTPS
+SpringBoot --> SMTP : SMTP / TLS
+
+@enduml

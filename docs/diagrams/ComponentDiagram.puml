@@ -1,0 +1,37 @@
+@startuml ComponentDiagram
+skinparam monochrome true
+skinparam shadowing false
+skinparam componentStyle rectangle
+
+actor "Cliente HTTP" as Client
+
+package "Spring Boot Application" {
+    component "RateLimitFilter\n(Bucket4j + Caffeine)" as RateLimit
+    component "JwtAuthFilter\n(Spring Security)" as JwtFilter
+    component "Controllers\n(REST API)" as Controllers
+    component "Services\n(Lógica de negocio)" as Services
+    component "AuthService\n(Login / Registro / JWT)" as AuthService
+    component "JwtService\n(Generación / Validación)" as JwtService
+    component "Repositories\n(Spring Data JPA)" as Repositories
+    component "Flyway\n(Migraciones SQL)" as Flyway
+}
+
+database "PostgreSQL" as PostgreSQL
+component "Cloudinary\n(CDN Imágenes)" as Cloudinary
+component "Servidor SMTP\n(Correo electrónico)" as SMTP
+
+Client -right-> RateLimit : HTTPS
+RateLimit --> JwtFilter
+JwtFilter --> Controllers
+Controllers --> Services
+Controllers --> AuthService
+AuthService --> JwtService
+AuthService --> Repositories
+Services --> Repositories
+Repositories --> PostgreSQL : JDBC
+Flyway --> PostgreSQL : DDL
+Services --> Cloudinary : HTTPS
+Services --> SMTP : SMTP/TLS
+AuthService --> SMTP : SMTP/TLS
+
+@enduml

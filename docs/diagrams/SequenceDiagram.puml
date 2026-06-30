@@ -1,0 +1,117 @@
+@startuml Sequence_Register
+skinparam monochrome true
+skinparam shadowing false
+
+title Registro de usuario (con verificación de email)
+
+actor Client
+participant AuthController
+participant AuthService
+participant EmailVerificationCodeRepository
+participant EmailService
+participant UsersService
+participant UserRepository
+
+== Paso 1: Solicitar código de verificación ==
+Client -> AuthController : POST /auth/request-code { email }
+AuthController -> AuthService : requestVerificationCode(email)
+AuthService -> UserRepository : findByEmail(email)
+UserRepository --> AuthService : null
+AuthService -> EmailVerificationCodeRepository : deleteByEmail(email)
+AuthService -> EmailVerificationCodeRepository : save(hashedCode, expiresAt)
+AuthService -> EmailService : sendVerificationCode(email, code)
+EmailService --> Client : Correo con código OTP
+AuthController --> Client : 200 OK
+
+== Paso 2: Verificar código ==
+Client -> AuthController : POST /auth/verify-code { email, code }
+AuthController -> AuthService : verifyCode(email, code)
+AuthService -> EmailVerificationCodeRepository : findByEmailAndHashedCode(email, hashed)
+EmailVerificationCodeRepository --> AuthService : entity
+AuthService -> EmailVerificationCodeRepository : delete(entity)
+AuthController --> Client : 200 OK
+
+== Paso 3: Crear cuenta ==
+Client -> AuthController : POST /auth/register { username, email, password }
+AuthController -> UsersService : createUser(userRequest)
+UsersService -> UserRepository : findByUsername(username)
+UserRepository --> UsersService : null
+UsersService -> UserRepository : findByEmail(email)
+UserRepository --> UsersService : null
+UsersService -> UserRepository : save(newUser)
+AuthController --> Client : 201 Created
+
+@enduml
+
+@startuml Sequence_Login
+skinparam monochrome true
+skinparam shadowing false
+
+title Login
+
+actor Client
+participant AuthController
+participant AuthService
+participant UserRepository
+participant JwtService
+participant RefreshTokenRepository
+
+Client -> AuthController : POST /auth/login { username, password }
+AuthController -> AuthService : login(username, password)
+AuthService -> UserRepository : findByUsername(username)
+UserRepository --> AuthService : User
+AuthService -> AuthService : hashEncoder.matches(password, hashedPassword)
+
+alt credenciales inválidas
+    AuthService --> AuthController : BadCredentialsException
+    AuthController --> Client : 401 Unauthorized
+else credenciales válidas
+    AuthService -> UserRepository : save(user) [loggedIn = true]
+    AuthService -> JwtService : generateAccessToken(userId)
+    JwtService --> AuthService : accessToken
+    AuthService -> JwtService : generateRefreshToken(userId)
+    JwtService --> AuthService : refreshToken
+    AuthService -> RefreshTokenRepository : save(hashedRefreshToken)
+    AuthService --> AuthController : LoginResponse
+    AuthController --> Client : 200 OK { accessToken, refreshToken }
+end
+
+@enduml
+
+@startuml Sequence_CreatePublication
+skinparam monochrome true
+skinparam shadowing false
+
+title Crear publicación
+
+actor Client
+participant JwtAuthFilter
+participant PublicationsController
+participant PublicationsService
+participant PatternRepository
+participant UserRepository
+participant CloudinaryService
+participant PublicationRepository
+participant PublishedPatternRepository
+
+Client -> JwtAuthFilter : POST /publications\nAuthorization: Bearer <token>
+JwtAuthFilter -> JwtAuthFilter : validateToken() → userId
+JwtAuthFilter -> PublicationsController : request autenticado
+
+PublicationsController -> PublicationsService : createPublication(userId, request)
+PublicationsService -> PatternRepository : findById(patternId)
+PatternRepository --> PublicationsService : Pattern
+PublicationsService -> UserRepository : findById(userId)
+UserRepository --> PublicationsService : User
+
+opt imagen adjunta
+    PublicationsService -> CloudinaryService : uploadImage(file)
+    CloudinaryService --> PublicationsService : imageUrl
+end
+
+PublicationsService -> PublicationRepository : save(publication)
+PublicationsService -> PublishedPatternRepository : save(publishedPattern)
+PublicationsService --> PublicationsController : PublicationResponse
+PublicationsController --> Client : 201 Created
+
+@enduml
