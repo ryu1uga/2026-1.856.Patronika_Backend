@@ -1,3 +1,5 @@
+# Diagrama de Clases — Patronika Backend
+
 ```mermaid
 classDiagram
 direction TB
@@ -8,6 +10,7 @@ direction TB
 
 class AuthController {
   -authService: AuthService
+  -userService: UsersService
 }
 
 class UsersController {
@@ -34,12 +37,21 @@ class TutorialProgressesController {
   -tutorialProgressesService: TutorialProgressesService
 }
 
+class PatternLibraryController {
+  -patternLibraryService: PatternLibraryService
+}
+
+class PublishedPatternsController {
+  -publishedPatternRepository: PublishedPatternRepository
+}
+
 %% =========================
 %% SERVICES
 %% =========================
 
 class AuthService {
   -userRepository: UserRepository
+  -usersService: UsersService
   -refreshTokenRepository: RefreshTokenRepository
   -emailVerificationCodeRepository: EmailVerificationCodeRepository
   -jwtService: JwtService
@@ -49,11 +61,16 @@ class AuthService {
 
 class UsersService {
   -userRepository: UserRepository
+  -hashEncoder: HashEncoder
+  -cloudinaryService: CloudinaryService
+  -emailService: EmailService
+  -emailVerificationCodeRepository: EmailVerificationCodeRepository
 }
 
 class PatternsService {
   -patternRepository: PatternRepository
   -userRepository: UserRepository
+  -imageConvolutionService: ImageConvolutionService
 }
 
 class PublicationsService {
@@ -61,6 +78,8 @@ class PublicationsService {
   -patternRepository: PatternRepository
   -userRepository: UserRepository
   -cloudinaryService: CloudinaryService
+  -publishedPatternRepository: PublishedPatternRepository
+  -emailService: EmailService
 }
 
 class CommentsService {
@@ -79,10 +98,17 @@ class TutorialProgressesService {
   -userRepository: UserRepository
 }
 
+class PatternLibraryService {
+  -patternLibraryRepository: PatternLibraryRepository
+  -patternRepository: PatternRepository
+  -userRepository: UserRepository
+}
+
 class JwtService {
-  +generateToken()
+  +generateAccessToken()
+  +generateRefreshToken()
   +validateToken()
-  +extractUsername()
+  +getUserIdFromToken()
 }
 
 class HashEncoder {
@@ -91,11 +117,15 @@ class HashEncoder {
 }
 
 class EmailService {
-  +sendEmail()
+  +sendVerificationCode()
+  +sendPublicationDeletedEmail()
+  +sendSuspensionEmail()
+  +sendEmailChangeCode()
 }
 
 class CloudinaryService {
   +uploadImage()
+  +deleteImage()
 }
 
 class ImageConvolutionService {
@@ -146,6 +176,16 @@ class EmailVerificationCodeRepository {
   JpaRepository~EmailVerificationCodeEntity, UUID~
 }
 
+class PatternLibraryRepository {
+  <<interface>>
+  JpaRepository~PatternLibrary, UUID~
+}
+
+class PublishedPatternRepository {
+  <<interface>>
+  JpaRepository~PublishedPattern, UUID~
+}
+
 %% =========================
 %% ENTITIES
 %% =========================
@@ -162,11 +202,7 @@ class User {
   +LocalDate registeredDate
   +Boolean activateNotification
   +LocalDate? suspensionEndDate
-  +String token
-  +MutableList~Pattern~ patterns
-  +MutableList~Publication~ publications
-  +MutableList~Comment~ comments
-  +MutableList~TutorialProgress~ tutorialProgresses
+  +String? token
 }
 
 class Pattern {
@@ -174,11 +210,11 @@ class Pattern {
   +User user
   +String name
   +String? gridData
-  +Int size
+  +Int width
+  +Int height
   +Boolean isPublic
   +Instant? publishedAt
   +Instant createdAt
-  +MutableList~Publication~ publications
 }
 
 class Publication {
@@ -189,7 +225,7 @@ class Publication {
   +Int technique
   +String? imageUrl
   +Instant? publishedAt
-  +MutableList~Comment~ comments
+  +Int reportCount
 }
 
 class Comment {
@@ -197,6 +233,7 @@ class Comment {
   +User user
   +Publication publication
   +String content
+  +Int reportCount
   +Instant createdAt
   +Instant? updatedAt
 }
@@ -207,7 +244,6 @@ class Tutorial {
   +String description
   +Int difficulty
   +String url
-  +MutableList~TutorialProgress~ tutorialProgresses
 }
 
 class TutorialProgress {
@@ -218,11 +254,25 @@ class TutorialProgress {
   +LocalDate? registeredDate
 }
 
+class PatternLibrary {
+  +UUID? id
+  +User user
+  +Pattern pattern
+  +Instant savedAt
+}
+
+class PublishedPattern {
+  +UUID? id
+  +User user
+  +Pattern pattern
+  +Instant publishedAt
+}
+
 class RefreshTokenEntity {
   +UUID? id
   +UUID userId
-  +Instant expiresAt
   +String token
+  +Instant expiresAt
   +Instant createdAt
 }
 
@@ -239,18 +289,22 @@ class EmailVerificationCodeEntity {
 %% =========================
 
 AuthController --> AuthService
+AuthController --> UsersService
 UsersController --> UsersService
 PatternsController --> PatternsService
 PublicationsController --> PublicationsService
 CommentsController --> CommentsService
 TutorialsController --> TutorialsService
 TutorialProgressesController --> TutorialProgressesService
+PatternLibraryController --> PatternLibraryService
+PublishedPatternsController --> PublishedPatternRepository
 
 %% =========================
-%% SERVICE -> REPOSITORY
+%% SERVICE -> REPOSITORY / SERVICE
 %% =========================
 
 AuthService --> UserRepository
+AuthService --> UsersService
 AuthService --> RefreshTokenRepository
 AuthService --> EmailVerificationCodeRepository
 AuthService --> JwtService
@@ -258,14 +312,20 @@ AuthService --> HashEncoder
 AuthService --> EmailService
 
 UsersService --> UserRepository
+UsersService --> CloudinaryService
+UsersService --> EmailService
+UsersService --> EmailVerificationCodeRepository
 
 PatternsService --> PatternRepository
 PatternsService --> UserRepository
+PatternsService --> ImageConvolutionService
 
 PublicationsService --> PublicationRepository
 PublicationsService --> PatternRepository
 PublicationsService --> UserRepository
 PublicationsService --> CloudinaryService
+PublicationsService --> PublishedPatternRepository
+PublicationsService --> EmailService
 
 CommentsService --> CommentRepository
 CommentsService --> PublicationRepository
@@ -276,6 +336,10 @@ TutorialsService --> TutorialRepository
 TutorialProgressesService --> TutorialProgressRepository
 TutorialProgressesService --> TutorialRepository
 TutorialProgressesService --> UserRepository
+
+PatternLibraryService --> PatternLibraryRepository
+PatternLibraryService --> PatternRepository
+PatternLibraryService --> UserRepository
 
 %% =========================
 %% REPOSITORY -> ENTITY
@@ -289,6 +353,8 @@ TutorialRepository --> Tutorial
 TutorialProgressRepository --> TutorialProgress
 RefreshTokenRepository --> RefreshTokenEntity
 EmailVerificationCodeRepository --> EmailVerificationCodeEntity
+PatternLibraryRepository --> PatternLibrary
+PublishedPatternRepository --> PublishedPattern
 
 %% =========================
 %% ENTITY RELATIONSHIPS
@@ -298,20 +364,28 @@ User "1" --> "0..*" Pattern : crea
 User "1" --> "0..*" Publication : publica
 User "1" --> "0..*" Comment : comenta
 User "1" --> "0..*" TutorialProgress : registra
+User "1" --> "0..*" PatternLibrary : guarda
+User "1" --> "0..*" PublishedPattern : registra publicación
 
 Pattern "1" --> "0..*" Publication : se publica como
-Publication "1" --> "0..*" Comment : recibe
+Pattern "1" --> "0..*" PatternLibrary : guardado en
+Pattern "1" --> "0..*" PublishedPattern : publicado en
 
-Tutorial "1" --> "0..*" TutorialProgress : progreso
+Publication "1" --> "0..*" Comment : recibe
 
 Comment "*" --> "1" User : autor
 Comment "*" --> "1" Publication : pertenece a
 
-Pattern "*" --> "1" User : usuario
-
-Publication "*" --> "1" User : usuario
+Pattern "*" --> "1" User : propietario
+Publication "*" --> "1" User : autor
 Publication "*" --> "1" Pattern : patrón
 
 TutorialProgress "*" --> "1" User : usuario
 TutorialProgress "*" --> "1" Tutorial : tutorial
+
+PatternLibrary "*" --> "1" User : usuario
+PatternLibrary "*" --> "1" Pattern : patrón
+
+PublishedPattern "*" --> "1" User : usuario
+PublishedPattern "*" --> "1" Pattern : patrón
 ```
