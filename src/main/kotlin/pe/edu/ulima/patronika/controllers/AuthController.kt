@@ -22,7 +22,7 @@ class AuthController(
     private val userService: UsersService,
 ) {
     @PostMapping("/login")
-    fun login(@Valid @RequestBody body: AuthRequest): ResponseEntity<ApiResponse<LoginResponseDto>> {
+    fun login(@Valid @RequestBody body: AuthRequest): ResponseEntity<ApiResponse<LoginResponse>> {
         val loginResponse = authService.login(body.username, body.password)
         return ResponseEntity.ok(ApiResponse(true, loginResponse))
     }

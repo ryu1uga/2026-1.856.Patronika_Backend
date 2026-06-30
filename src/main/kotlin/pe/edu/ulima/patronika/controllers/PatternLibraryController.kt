@@ -5,8 +5,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.dto.PatternLibraryRequest
-import pe.edu.ulima.patronika.dto.PatternLibraryResponseDto
-import pe.edu.ulima.patronika.dto.PatternResponseDto
+import pe.edu.ulima.patronika.dto.PatternLibraryResponse
+import pe.edu.ulima.patronika.dto.PatternResponse
 import pe.edu.ulima.patronika.services.PatternLibraryService
 import java.util.UUID
 
@@ -19,7 +19,7 @@ class PatternLibraryController(
     @PostMapping
     fun savePattern(
         @RequestBody request: PatternLibraryRequest
-    ): ResponseEntity<ApiResponse<PatternLibraryResponseDto>> {
+    ): ResponseEntity<ApiResponse<PatternLibraryResponse>> {
         val entry = patternLibraryService.savePattern(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse(true, entry))
     }
@@ -37,7 +37,7 @@ class PatternLibraryController(
     @GetMapping("/user/{userId}")
     fun getLibrary(
         @PathVariable userId: UUID
-    ): ResponseEntity<ApiResponse<List<PatternLibraryResponseDto>>> {
+    ): ResponseEntity<ApiResponse<List<PatternLibraryResponse>>> {
         val library = patternLibraryService.getLibraryByUser(userId)
         return ResponseEntity.ok(ApiResponse(true, library))
     }
@@ -46,7 +46,7 @@ class PatternLibraryController(
     @GetMapping("/user/{userId}/all")
     fun getAllPatterns(
         @PathVariable userId: UUID
-    ): ResponseEntity<ApiResponse<List<PatternResponseDto>>> {
+    ): ResponseEntity<ApiResponse<List<PatternResponse>>> {
         val patterns = patternLibraryService.getAllPatternsOfUser(userId)
         return ResponseEntity.ok(ApiResponse(true, patterns))
     }

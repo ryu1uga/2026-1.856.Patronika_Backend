@@ -3,7 +3,7 @@ package pe.edu.ulima.patronika.dto
 import java.time.LocalDate
 import java.util.UUID
 
-data class TutorialProgressResponseDto(
+data class TutorialProgressResponse(
     val id: UUID?,
     val userId: UUID?,
     val tutorialId: UUID?,

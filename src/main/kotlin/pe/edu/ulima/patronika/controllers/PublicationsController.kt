@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.dto.DeletePublicationRequest
 import pe.edu.ulima.patronika.dto.PublicationRequest
-import pe.edu.ulima.patronika.dto.PublicationResponseDto
+import pe.edu.ulima.patronika.dto.PublicationResponse
 import pe.edu.ulima.patronika.services.PublicationsService
 import java.util.UUID
 
@@ -21,13 +21,13 @@ class PublicationsController (
     private val publicationsService: PublicationsService,
 ) {
     @GetMapping
-    fun loadAllPublications(): ResponseEntity<ApiResponse<List<PublicationResponseDto>>> {
+    fun loadAllPublications(): ResponseEntity<ApiResponse<List<PublicationResponse>>> {
         val publications = publicationsService.getAll()
         return ResponseEntity.ok(ApiResponse(true, publications))
     }
 
     @GetMapping("/{id}")
-    fun loadPublication(@PathVariable id: UUID): ResponseEntity<ApiResponse<PublicationResponseDto>> {
+    fun loadPublication(@PathVariable id: UUID): ResponseEntity<ApiResponse<PublicationResponse>> {
         val publication = publicationsService.getPublication(id)
         return ResponseEntity.ok(ApiResponse(true, publication))
     }
@@ -42,7 +42,7 @@ class PublicationsController (
     fun postPublication(
         @RequestPart("publication") publicationRequest: PublicationRequest,
         @RequestPart("file", required = false) file: MultipartFile?
-    ): ResponseEntity<ApiResponse<PublicationResponseDto>> {
+    ): ResponseEntity<ApiResponse<PublicationResponse>> {
         val insertedPublication = publicationsService.insertPublication(publicationRequest, file)
         return ResponseEntity(ApiResponse(true, insertedPublication), HttpStatus.CREATED)
     }

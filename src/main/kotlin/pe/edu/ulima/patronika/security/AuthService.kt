@@ -10,7 +10,7 @@ import pe.edu.ulima.patronika.database.repository.EmailVerificationCodeRepositor
 import pe.edu.ulima.patronika.database.repository.RefreshTokenRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.ChangePasswordRequest
-import pe.edu.ulima.patronika.dto.LoginResponseDto
+import pe.edu.ulima.patronika.dto.LoginResponse
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
@@ -40,7 +40,7 @@ class AuthService(
     // -------------------------
 
     @Transactional
-    fun login(username: String, password: String): LoginResponseDto {
+    fun login(username: String, password: String): LoginResponse {
         val user = userRepository.findByUsername(username)
             ?: throw BadCredentialsException("Usuario o contraseña incorrectos")
 
@@ -66,7 +66,7 @@ class AuthService(
             ChronoUnit.DAYS.between(LocalDate.now(), user.suspensionEndDate)
         } else null
 
-        return LoginResponseDto(
+        return LoginResponse(
             userId = user.id.toString(),
             accessToken = newAccessToken,
             refreshToken = newRefreshToken,
@@ -129,7 +129,7 @@ class AuthService(
         // Borrar códigos previos del mismo email
         emailVerificationCodeRepository.deleteByEmail(email)
 
-        val code = (1000..9999).random().toString()
+        val code = (100000..999999).random().toString()
         val hashed = hashToken(code)
         val expiresAt = Instant.now().plusMillis(codeExpiryMs)
 
@@ -153,7 +153,7 @@ class AuthService(
         // Borrar códigos previos del mismo email
         emailVerificationCodeRepository.deleteByEmail(email)
 
-        val code = (1000..9999).random().toString()
+        val code = (100000..999999).random().toString()
         val hashed = hashToken(code)
         val expiresAt = Instant.now().plusMillis(codeExpiryMs)
 

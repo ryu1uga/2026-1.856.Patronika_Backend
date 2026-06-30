@@ -11,8 +11,8 @@ import pe.edu.ulima.patronika.database.repository.PublicationRepository
 import pe.edu.ulima.patronika.database.repository.PublishedPatternRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.PublicationRequest
-import pe.edu.ulima.patronika.dto.PublicationResponseDto
-import pe.edu.ulima.patronika.dto.UserSummaryDto
+import pe.edu.ulima.patronika.dto.PublicationResponse
+import pe.edu.ulima.patronika.dto.UserSummary
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
@@ -28,9 +28,9 @@ class PublicationsService (
     private val publishedPatternRepository: PublishedPatternRepository,
     private val emailService: EmailService
 ) {
-    private fun Publication.toDto() = PublicationResponseDto(
+    private fun Publication.toDto() = PublicationResponse(
         id = id,
-        user = UserSummaryDto(
+        user = UserSummary(
             id = user.id,
             username = user.username,
             profileImageUrl = user.profileImageUrl
@@ -43,10 +43,10 @@ class PublicationsService (
         reportCount = reportCount
     )
 
-    fun getAll(): List<PublicationResponseDto> =
+    fun getAll(): List<PublicationResponse> =
         publicationRepository.findAllByOrderByPublishedAtDesc().map { it.toDto() }
 
-    fun getPublication(id: UUID): PublicationResponseDto {
+    fun getPublication(id: UUID): PublicationResponse {
         return publicationRepository.findById(id).orElseThrow { NotFoundException() }.toDto()
     }
 
@@ -65,7 +65,7 @@ class PublicationsService (
     fun insertPublication(
         publicationRequest: PublicationRequest,
         file: MultipartFile?
-    ): PublicationResponseDto {
+    ): PublicationResponse {
         val user = getUser(publicationRequest.userId)
         val pattern = getPattern(publicationRequest.patternId)
 

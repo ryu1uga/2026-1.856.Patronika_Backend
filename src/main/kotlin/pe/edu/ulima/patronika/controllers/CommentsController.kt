@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.dto.CommentRequest
-import pe.edu.ulima.patronika.dto.CommentResponseDto
+import pe.edu.ulima.patronika.dto.CommentResponse
 import pe.edu.ulima.patronika.services.CommentsService
 import java.util.UUID
 
@@ -16,13 +16,13 @@ class CommentsController (
     private val commentsService: CommentsService
 ) {
     @GetMapping
-    fun loadAllComments(): ResponseEntity<ApiResponse<List<CommentResponseDto>>> {
+    fun loadAllComments(): ResponseEntity<ApiResponse<List<CommentResponse>>> {
         val comments = commentsService.getAll()
         return ResponseEntity.ok(ApiResponse(true, comments))
     }
 
     @GetMapping("/{id}")
-    fun loadComment(@PathVariable id: UUID): ResponseEntity<ApiResponse<CommentResponseDto>> {
+    fun loadComment(@PathVariable id: UUID): ResponseEntity<ApiResponse<CommentResponse>> {
         val comment = commentsService.getComment(id)
         return ResponseEntity.ok(ApiResponse(true, comment))
     }
@@ -31,7 +31,7 @@ class CommentsController (
     fun postComment(
         @RequestHeader("UserId") userId: UUID,
         @Valid @RequestBody commentRequest: CommentRequest
-    ): ResponseEntity<ApiResponse<CommentResponseDto>> {
+    ): ResponseEntity<ApiResponse<CommentResponse>> {
         val insertedComment = commentsService.insertComment(userId, commentRequest)
         return ResponseEntity
             .status(HttpStatus.CREATED)
@@ -48,7 +48,7 @@ class CommentsController (
     }
 
     @PostMapping("/{id}/report")
-    fun reportComment(@PathVariable id: UUID): ResponseEntity<ApiResponse<CommentResponseDto>> {
+    fun reportComment(@PathVariable id: UUID): ResponseEntity<ApiResponse<CommentResponse>> {
         val comment = commentsService.reportComment(id)
         return ResponseEntity.ok(ApiResponse(true, comment))
     }

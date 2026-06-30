@@ -8,7 +8,7 @@ import pe.edu.ulima.patronika.database.repository.PatternRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.PatternCreateRequest
 import pe.edu.ulima.patronika.dto.PatternRequest
-import pe.edu.ulima.patronika.dto.PatternResponseDto
+import pe.edu.ulima.patronika.dto.PatternResponse
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import java.util.UUID
@@ -19,7 +19,7 @@ class PatternsService (
     private val userRepository: UserRepository,
     private val imageConvolutionService: ImageConvolutionService
 ) {
-    private fun Pattern.toDto() = PatternResponseDto(
+    private fun Pattern.toDto() = PatternResponse(
         id = id,
         userId = user.id,
         name = name,
@@ -31,10 +31,10 @@ class PatternsService (
         createdAt = createdAt
     )
 
-    fun getAll(): List<PatternResponseDto> =
+    fun getAll(): List<PatternResponse> =
         patternRepository.findAllByOrderByCreatedAtDesc().map { it.toDto() }
 
-    fun getAllByUserId(userId: UUID): List<PatternResponseDto> {
+    fun getAllByUserId(userId: UUID): List<PatternResponse> {
         if (!userRepository.existsById(userId)) {
             throw BadRequestException("Usuario no registrado")
         }
@@ -42,7 +42,7 @@ class PatternsService (
         return patternRepository.findAllByUserIdOrderByCreatedAtDesc(userId).map { it.toDto() }
     }
 
-    fun getPattern(id: UUID): PatternResponseDto {
+    fun getPattern(id: UUID): PatternResponse {
         return patternRepository.findById(id).orElseThrow { NotFoundException() }.toDto()
     }
 
@@ -58,7 +58,7 @@ class PatternsService (
         userId: UUID,
         patternRequest: PatternCreateRequest,
         image: MultipartFile? = null
-    ): PatternResponseDto {
+    ): PatternResponse {
         val user = getUser(userId)
 
         // Procesar imagen si se subió una

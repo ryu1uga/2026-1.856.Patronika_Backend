@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.dto.PatternCreateRequest
 import pe.edu.ulima.patronika.dto.PatternRequest
-import pe.edu.ulima.patronika.dto.PatternResponseDto
+import pe.edu.ulima.patronika.dto.PatternResponse
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.services.PatternsService
 import java.util.UUID
@@ -22,19 +22,19 @@ class PatternsController (
     private val patternsService: PatternsService
 ) {
     @GetMapping
-    fun loadAllPatterns(): ResponseEntity<ApiResponse<List<PatternResponseDto>>> {
+    fun loadAllPatterns(): ResponseEntity<ApiResponse<List<PatternResponse>>> {
         val patterns = patternsService.getAll()
         return ResponseEntity.ok(ApiResponse(true, patterns))
     }
 
     @GetMapping("/user/{userId}")
-    fun loadPatternsByUserId(@PathVariable userId: UUID): ResponseEntity<ApiResponse<List<PatternResponseDto>>> {
+    fun loadPatternsByUserId(@PathVariable userId: UUID): ResponseEntity<ApiResponse<List<PatternResponse>>> {
         val patterns = patternsService.getAllByUserId(userId)
         return ResponseEntity.ok(ApiResponse(true, patterns))
     }
 
     @GetMapping("/{id}")
-    fun loadPattern(@PathVariable id: UUID): ResponseEntity<ApiResponse<PatternResponseDto>> {
+    fun loadPattern(@PathVariable id: UUID): ResponseEntity<ApiResponse<PatternResponse>> {
         val pattern = patternsService.getPattern(id)
         return ResponseEntity.ok(ApiResponse(true, pattern))
     }
@@ -50,7 +50,7 @@ class PatternsController (
         @RequestHeader("UserId") userId: UUID,
         @RequestPart("request") request: PatternCreateRequest,
         @RequestPart("image", required = false) image: MultipartFile?
-    ): ResponseEntity<ApiResponse<PatternResponseDto>> {
+    ): ResponseEntity<ApiResponse<PatternResponse>> {
         if (request.width < 1) throw BadRequestException("El width debe ser mayor a 0")
         if (request.height < 1) throw BadRequestException("El height debe ser mayor a 0")
 

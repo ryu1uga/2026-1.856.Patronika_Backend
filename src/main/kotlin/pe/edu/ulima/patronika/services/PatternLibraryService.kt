@@ -8,8 +8,8 @@ import pe.edu.ulima.patronika.database.repository.PatternLibraryRepository
 import pe.edu.ulima.patronika.database.repository.PatternRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.PatternLibraryRequest
-import pe.edu.ulima.patronika.dto.PatternLibraryResponseDto
-import pe.edu.ulima.patronika.dto.PatternResponseDto
+import pe.edu.ulima.patronika.dto.PatternLibraryResponse
+import pe.edu.ulima.patronika.dto.PatternResponse
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.NotFoundException
@@ -21,7 +21,7 @@ class PatternLibraryService(
     private val patternRepository: PatternRepository,
     private val userRepository: UserRepository
 ) {
-    private fun Pattern.toDto() = PatternResponseDto(
+    private fun Pattern.toDto() = PatternResponse(
         id = id,
         userId = user.id,
         name = name,
@@ -33,14 +33,14 @@ class PatternLibraryService(
         createdAt = createdAt
     )
 
-    private fun PatternLibrary.toDto() = PatternLibraryResponseDto(
+    private fun PatternLibrary.toDto() = PatternLibraryResponse(
         id = id,
         userId = user.id,
         pattern = pattern.toDto(),
         savedAt = savedAt
     )
 
-    fun savePattern(request: PatternLibraryRequest): PatternLibraryResponseDto {
+    fun savePattern(request: PatternLibraryRequest): PatternLibraryResponse {
         val user = userRepository.findById(request.userId)
             .orElseThrow { BadRequestException("Usuario no registrado") }
         val pattern = patternRepository.findById(request.patternId)
@@ -64,12 +64,12 @@ class PatternLibraryService(
         patternLibraryRepository.deleteByUserIdAndPatternId(userId, patternId)
     }
 
-    fun getLibraryByUser(userId: UUID): List<PatternLibraryResponseDto> {
+    fun getLibraryByUser(userId: UUID): List<PatternLibraryResponse> {
         if (!userRepository.existsById(userId)) throw BadRequestException("Usuario no registrado")
         return patternLibraryRepository.findAllByUserIdOrderBySavedAtDesc(userId).map { it.toDto() }
     }
 
-    fun getAllPatternsOfUser(userId: UUID): List<PatternResponseDto> {
+    fun getAllPatternsOfUser(userId: UUID): List<PatternResponse> {
         if (!userRepository.existsById(userId)) throw BadRequestException("Usuario no registrado")
 
         val ownPatterns = patternRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
