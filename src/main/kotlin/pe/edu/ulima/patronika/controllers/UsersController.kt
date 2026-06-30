@@ -15,6 +15,7 @@ import pe.edu.ulima.patronika.dto.SuspendUserRequest
 import pe.edu.ulima.patronika.dto.UserChangePasswordRequest
 import pe.edu.ulima.patronika.dto.UserRequest
 import pe.edu.ulima.patronika.dto.UserUpdateRequest
+import pe.edu.ulima.patronika.dto.VerificationCodeRequest
 import pe.edu.ulima.patronika.services.UsersService
 import java.util.UUID
 
@@ -77,6 +78,14 @@ class UsersController (
     fun deleteUser(@PathVariable id: UUID): ResponseEntity<ApiResponse<String>> {
         usersService.deleteUser(id)
         return ResponseEntity.ok(ApiResponse(true, "Usuario eliminado satisfactoriamente"))
+    }
+
+    @PostMapping("/request-email-change-code")
+    fun requestEmailChangeCode(
+        @RequestBody body: VerificationCodeRequest
+    ): ResponseEntity<ApiResponse<String>> {
+        usersService.requestEmailChangeCode(body.email)
+        return ResponseEntity.ok(ApiResponse(true, "Código enviado al nuevo correo"))
     }
 
     @PostMapping("/change-password")

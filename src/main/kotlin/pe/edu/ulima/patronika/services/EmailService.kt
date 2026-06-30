@@ -1,4 +1,4 @@
-package pe.edu.ulima.Patrónika.services
+package pe.edu.ulima.patronika.services
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.javamail.JavaMailSender
@@ -44,6 +44,27 @@ class EmailService(
             <p><strong>Motivo:</strong> $reason</p>
             <p><strong>Fecha de fin de suspensión:</strong> $endDate</p>
             <p>Si consideras que esto es un error, contacta al soporte.</p>
+            """.trimIndent(),
+            true
+        )
+
+        mailSender.send(message)
+    }
+
+    fun sendEmailChangeCode(toEmail: String, code: String) {
+        val message = mailSender.createMimeMessage()
+        val helper = MimeMessageHelper(message, true, "UTF-8")
+
+        helper.setFrom(fromAddress)
+        helper.setTo(toEmail)
+        helper.setSubject("Verifica tu nuevo correo - Patronika")
+        helper.setText(
+            """
+            <h2>Verificación de nuevo correo</h2>
+            <p>Tu código para confirmar el cambio de correo es:</p>
+            <h1 style="letter-spacing: 8px;">$code</h1>
+            <p>Este código expira en <strong>10 minutos</strong>.</p>
+            <p>Si no solicitaste esto, ignora este correo.</p>
             """.trimIndent(),
             true
         )

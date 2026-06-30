@@ -1,8 +1,11 @@
 package pe.edu.ulima.patronika.services
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
+import pe.edu.ulima.patronika.database.model.EmailVerificationCodeEntity
 import pe.edu.ulima.patronika.database.model.User
+import pe.edu.ulima.patronika.database.repository.EmailVerificationCodeRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.*
 import pe.edu.ulima.patronika.exception.BadRequestException
@@ -10,8 +13,10 @@ import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
 import pe.edu.ulima.patronika.security.HashEncoder
-import pe.edu.ulima.patronika.services.EmailService
+import java.security.MessageDigest
+import java.time.Instant
 import java.time.LocalDate
+import java.util.Base64
 import java.util.UUID
 
 @Service
@@ -19,7 +24,9 @@ class UsersService (
     private val userRepository: UserRepository,
     private val hashEncoder: HashEncoder,
     private val cloudinaryService: CloudinaryService,
-    private val emailService: EmailService
+    private val emailService: EmailService,
+    private val emailVerificationCodeRepository: EmailVerificationCodeRepository,
+    @Value("\${app.verification.code.expiry-ms}") private val codeExpiryMs: Long
 ) {
     fun getAll(): List<User> = userRepository.findAll()
 
@@ -100,6 +107,34 @@ class UsersService (
         user.profileImageUrl = uploadedUrl
 
         return userRepository.save(user)
+    }
+
+    fun requestEmailChangeCode(newEmail: String) {
+        if (userRepository.findByEmail(newEmail) != null) {
+            throw ConflictException("Ese correo ya existe, por favor elige otro")
+        }
+
+        emailVerificationCodeRepository.deleteByEmail(newEmail)
+
+        val code = (1000..9999).random().toString()
+        val hashed = hashToken(code)
+        val expiresAt = Instant.now().plusMillis(codeExpiryMs)
+
+        emailVerificationCodeRepository.save(
+            EmailVerificationCodeEntity(
+                email = newEmail,
+                hashedCode = hashed,
+                expiresAt = expiresAt
+            )
+        )
+
+        emailService.sendEmailChangeCode(newEmail, code)
+    }
+
+    private fun hashToken(token: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hashBytes = digest.digest(token.encodeToByteArray())
+        return Base64.getEncoder().encodeToString(hashBytes)
     }
 
     fun changePassword(req: UserChangePasswordRequest) {
