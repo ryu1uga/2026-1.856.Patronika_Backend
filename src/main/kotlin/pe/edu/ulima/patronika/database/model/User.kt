@@ -13,7 +13,7 @@ class User (
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     var username: String = "",
 
     @Column(nullable = false, unique = true)

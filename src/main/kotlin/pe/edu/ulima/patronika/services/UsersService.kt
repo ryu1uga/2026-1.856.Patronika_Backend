@@ -138,7 +138,7 @@ class UsersService (
     }
 
     fun changePassword(req: UserChangePasswordRequest) {
-        val user = getUser(req.userId)
+        val user = userRepository.findByEmail(req.email) ?: throw NotFoundException();
 
         if (!hashEncoder.matches(req.currentPassword, user.hashedPassword)) {
             throw BadRequestException("La contraseña actual es incorrecta")
