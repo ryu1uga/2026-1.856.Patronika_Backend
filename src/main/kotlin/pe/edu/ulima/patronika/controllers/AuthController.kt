@@ -72,13 +72,13 @@ class AuthController(
         return ResponseEntity.ok(ApiResponse(true, result))
     }
 
-    @PostMapping("/change-password/request-code")
+    @PostMapping("/forgot-password/request-code")
     fun requestCodeForExistingEmail(@Valid @RequestBody body: VerificationCodeRequest): ResponseEntity<ApiResponse<String>> {
         authService.requestVerificationCodeOnExistingEmail(body.email)
         return ResponseEntity.ok(ApiResponse(true, "Código enviado al correo"))
     }
 
-    @PostMapping("/change-password")
+    @PostMapping("/forgot-password")
     fun changePassword(@Valid @RequestBody body: ChangePasswordRequest): ResponseEntity<ApiResponse<String>> {
         authService.changePassword(body)
         return ResponseEntity.ok(ApiResponse(true, "Contraseña cambiada exitosamente"))
