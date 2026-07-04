@@ -2,8 +2,8 @@ package pe.edu.ulima.patronika.dto
 
 import jakarta.validation.constraints.NotBlank
 
-data class ChangePasswordRequest(
+data class ForgotPasswordRequest(
     @field:NotBlank val email: String,
-    var password: String,
+    @field:NotBlank var password: String,
 )
 

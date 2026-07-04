@@ -9,7 +9,7 @@ import pe.edu.ulima.patronika.database.model.RefreshTokenEntity
 import pe.edu.ulima.patronika.database.repository.EmailVerificationCodeRepository
 import pe.edu.ulima.patronika.database.repository.RefreshTokenRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
-import pe.edu.ulima.patronika.dto.ChangePasswordRequest
+import pe.edu.ulima.patronika.dto.ForgotPasswordRequest
 import pe.edu.ulima.patronika.dto.LoginResponse
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.ConflictException
@@ -184,10 +184,10 @@ class AuthService(
     }
 
     @Transactional
-    fun changePassword(changePasswordRequest: ChangePasswordRequest) {
-        val user = userRepository.findByEmail(changePasswordRequest.email)
+    fun changePassword(forgotPasswordRequest: ForgotPasswordRequest) {
+        val user = userRepository.findByEmail(forgotPasswordRequest.email)
 
-        user!!.hashedPassword = hashEncoder.encode(changePasswordRequest.password)
+        user!!.hashedPassword = hashEncoder.encode(forgotPasswordRequest.password)
 
         userRepository.save(user)
     }

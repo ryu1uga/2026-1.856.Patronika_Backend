@@ -80,7 +80,7 @@ class UsersController (
         return ResponseEntity.ok(ApiResponse(true, "Usuario eliminado satisfactoriamente"))
     }
 
-    @PostMapping("/request-email-change-code")
+    @PostMapping("/change-email/request-code")
     fun requestEmailChangeCode(
         @RequestBody body: VerificationCodeRequest
     ): ResponseEntity<ApiResponse<String>> {
