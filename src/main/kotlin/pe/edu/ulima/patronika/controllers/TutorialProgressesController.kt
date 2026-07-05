@@ -1,5 +1,7 @@
 package pe.edu.ulima.patronika.controllers
 
+import io.swagger.v3.oas.annotations.Operation
+
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -16,18 +18,21 @@ class TutorialProgressesController (
     private val tutorialProgressesService: TutorialProgressesService
 ) {
     @GetMapping
+    @Operation(summary = "List all tutorial progresses")
     fun loadAllTutorialProgresses(): ResponseEntity<ApiResponse<List<TutorialProgressResponse>>> {
         val tutorialProgresses = tutorialProgressesService.getAll()
         return ResponseEntity.ok(ApiResponse(true, tutorialProgresses))
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get tutorial progress by id")
     fun loadTutorialProgress(@PathVariable id: UUID): ResponseEntity<ApiResponse<TutorialProgressResponse>> {
         val tutorialProgress = tutorialProgressesService.getTutorialProgress(id)
         return ResponseEntity.ok(ApiResponse(true, tutorialProgress))
     }
 
     @PostMapping
+    @Operation(summary = "Create tutorial progress")
     fun postTutorialProgress(
         @RequestHeader("UserId") userId: UUID,
         @Valid @RequestBody tutorialProgressRequest: TutorialProgressRequest
@@ -39,6 +44,7 @@ class TutorialProgressesController (
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update tutorial progress")
     fun putTutorialProgress(
         @PathVariable id: UUID,
         @Valid @RequestBody tutorialProgressRequest: TutorialProgressRequest
@@ -48,6 +54,7 @@ class TutorialProgressesController (
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete tutorial progress")
     fun deleteTutorialProgress(@PathVariable id: UUID) : ResponseEntity<ApiResponse<String>> {
         tutorialProgressesService.deleteTutorialProgress(id)
         return ResponseEntity.ok(ApiResponse(true, "Progreso de tutorial eliminado exitosamente"))

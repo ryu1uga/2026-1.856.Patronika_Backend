@@ -116,7 +116,7 @@ class UsersService (
 
         emailVerificationCodeRepository.deleteByEmail(newEmail)
 
-        val code = (1000..9999).random().toString()
+        val code = (100000..999999).random().toString()
         val hashed = hashToken(code)
         val expiresAt = Instant.now().plusMillis(codeExpiryMs)
 

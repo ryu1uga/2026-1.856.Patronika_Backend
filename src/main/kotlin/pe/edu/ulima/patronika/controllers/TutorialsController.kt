@@ -1,5 +1,7 @@
 package pe.edu.ulima.patronika.controllers
 
+import io.swagger.v3.oas.annotations.Operation
+
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -16,18 +18,21 @@ class TutorialsController (
     private val tutorialsService: TutorialsService
 ) {
     @GetMapping
+    @Operation(summary = "List all tutorials")
     fun loadAllTutorials() : ResponseEntity<ApiResponse<List<Tutorial>>> {
         val tutorials = tutorialsService.getAll()
         return ResponseEntity.ok(ApiResponse(true, tutorials))
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get tutorial by id")
     fun loadTutorial(@PathVariable id : UUID) : ResponseEntity<ApiResponse<Tutorial>> {
         val tutorial = tutorialsService.getTutorial(id)
         return ResponseEntity.ok(ApiResponse(true, tutorial))
     }
 
     @PostMapping
+    @Operation(summary = "Create tutorial")
     fun postTutorial(
         @Valid @RequestBody tutorialRequest: TutorialRequest
     ) : ResponseEntity<ApiResponse<Tutorial>> {
@@ -38,6 +43,7 @@ class TutorialsController (
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update tutorial")
     fun putTutorial(
         @PathVariable id: UUID,
         @Valid @RequestBody tutorialRequest: TutorialRequest
@@ -47,6 +53,7 @@ class TutorialsController (
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete tutorial")
     fun deleteTutorial(@PathVariable id : UUID) : ResponseEntity<ApiResponse<String>> {
         tutorialsService.deleteTutorial(id)
         return ResponseEntity.ok(ApiResponse(true, "Tutorial eliminado exitosamente"))

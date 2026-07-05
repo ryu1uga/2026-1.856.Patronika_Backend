@@ -1,5 +1,7 @@
 package pe.edu.ulima.patronika.controllers
 
+import io.swagger.v3.oas.annotations.Operation
+
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Encoding
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
@@ -25,12 +27,14 @@ class UsersController (
     private val usersService: UsersService,
 ) {
     @GetMapping
+    @Operation(summary = "List all users")
     fun loadAllUsers(): ResponseEntity<ApiResponse<List<User>>> {
         val user = usersService.getAll()
         return ResponseEntity.ok(ApiResponse(true, user))
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get user by id")
     fun loadUser(@PathVariable id: UUID): ResponseEntity<ApiResponse<User>> {
         val user = usersService.getUser(id)
         return ResponseEntity.ok(ApiResponse(true, user))
@@ -43,6 +47,7 @@ class UsersController (
             encoding = [Encoding(name = "userRequest", contentType = MediaType.APPLICATION_JSON_VALUE)]
         )]
     )
+    @Operation(summary = "Create user")
     fun postUser(
         @RequestPart("userRequest") @Valid userRequest: UserRequest,
         @RequestPart("file", required = false) file: MultipartFile?
@@ -54,6 +59,7 @@ class UsersController (
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update user")
     fun putUser(
         @PathVariable id: UUID,
         @Valid @RequestBody userRequest: UserUpdateRequest
@@ -66,6 +72,7 @@ class UsersController (
         "/{id}/profile-image",
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
     )
+    @Operation(summary = "Update profile image")
     fun updateProfileImage(
         @PathVariable id: UUID,
         @RequestPart("file") file: MultipartFile
@@ -75,12 +82,14 @@ class UsersController (
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete user")
     fun deleteUser(@PathVariable id: UUID): ResponseEntity<ApiResponse<String>> {
         usersService.deleteUser(id)
         return ResponseEntity.ok(ApiResponse(true, "Usuario eliminado satisfactoriamente"))
     }
 
     @PostMapping("/change-email/request-code")
+    @Operation(summary = "Send email change code")
     fun requestEmailChangeCode(
         @RequestBody body: VerificationCodeRequest
     ): ResponseEntity<ApiResponse<String>> {
@@ -89,6 +98,7 @@ class UsersController (
     }
 
     @PostMapping("/change-password")
+    @Operation(summary = "Change password")
     fun changePassword(
         @Valid @RequestBody body: UserChangePasswordRequest
     ): ResponseEntity<ApiResponse<String>> {
@@ -97,6 +107,7 @@ class UsersController (
     }
 
     @PostMapping("/{id}/suspend")
+    @Operation(summary = "Suspend user")
     fun suspendUser(
         @PathVariable id: UUID,
         @RequestBody body: SuspendUserRequest

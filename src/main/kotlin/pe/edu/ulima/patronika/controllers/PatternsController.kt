@@ -1,4 +1,6 @@
 package pe.edu.ulima.patronika.controllers
+
+import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Encoding
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
@@ -22,18 +24,21 @@ class PatternsController (
     private val patternsService: PatternsService
 ) {
     @GetMapping
+    @Operation(summary = "List all patterns")
     fun loadAllPatterns(): ResponseEntity<ApiResponse<List<PatternResponse>>> {
         val patterns = patternsService.getAll()
         return ResponseEntity.ok(ApiResponse(true, patterns))
     }
 
     @GetMapping("/user/{userId}")
+    @Operation(summary = "List patterns by user")
     fun loadPatternsByUserId(@PathVariable userId: UUID): ResponseEntity<ApiResponse<List<PatternResponse>>> {
         val patterns = patternsService.getAllByUserId(userId)
         return ResponseEntity.ok(ApiResponse(true, patterns))
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get pattern by id")
     fun loadPattern(@PathVariable id: UUID): ResponseEntity<ApiResponse<PatternResponse>> {
         val pattern = patternsService.getPattern(id)
         return ResponseEntity.ok(ApiResponse(true, pattern))
@@ -46,6 +51,7 @@ class PatternsController (
             encoding = [Encoding(name = "request", contentType = MediaType.APPLICATION_JSON_VALUE)]
         )]
     )
+    @Operation(summary = "Create pattern")
     fun createPattern(
         @RequestHeader("UserId") userId: UUID,
         @RequestPart("request") request: PatternCreateRequest,
@@ -61,6 +67,7 @@ class PatternsController (
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update pattern")
     fun updatePattern(
         @PathVariable id: UUID,
         @Valid @RequestBody patternRequest: PatternRequest
@@ -70,6 +77,7 @@ class PatternsController (
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete pattern")
     fun deletePattern(@PathVariable id: UUID) : ResponseEntity<ApiResponse<String>> {
         patternsService.deletePattern(id)
         return ResponseEntity.ok(ApiResponse(true, "Patrón eliminado exitosamente"))
