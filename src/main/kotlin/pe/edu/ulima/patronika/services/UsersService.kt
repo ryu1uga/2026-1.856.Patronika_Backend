@@ -109,12 +109,14 @@ class UsersService (
         return userRepository.save(user)
     }
 
-    fun requestEmailChangeCode(newEmail: String) {
-        if (userRepository.findByEmail(newEmail) != null) {
-            throw ConflictException("Ese correo ya existe, por favor elige otro")
+    fun requestEmailChangeCode(currentEmail: String) {
+        // El código se envía al correo ACTUAL registrado en la base de datos,
+        // por lo que ese correo debe existir.
+        if (userRepository.findByEmail(currentEmail) == null) {
+            throw NotFoundException("No existe un usuario con ese correo")
         }
 
-        emailVerificationCodeRepository.deleteByEmail(newEmail)
+        emailVerificationCodeRepository.deleteByEmail(currentEmail)
 
         val code = (100000..999999).random().toString()
         val hashed = hashToken(code)
@@ -122,13 +124,13 @@ class UsersService (
 
         emailVerificationCodeRepository.save(
             EmailVerificationCodeEntity(
-                email = newEmail,
+                email = currentEmail,
                 hashedCode = hashed,
                 expiresAt = expiresAt
             )
         )
 
-        emailService.sendEmailChangeCode(newEmail, code)
+        emailService.sendEmailChangeCode(currentEmail, code)
     }
 
     private fun hashToken(token: String): String {

@@ -94,7 +94,7 @@ class UsersController (
         @RequestBody body: VerificationCodeRequest
     ): ResponseEntity<ApiResponse<String>> {
         usersService.requestEmailChangeCode(body.email)
-        return ResponseEntity.ok(ApiResponse(true, "Código enviado al nuevo correo"))
+        return ResponseEntity.ok(ApiResponse(true, "Código enviado a tu correo actual"))
     }
 
     @PostMapping("/change-password")
