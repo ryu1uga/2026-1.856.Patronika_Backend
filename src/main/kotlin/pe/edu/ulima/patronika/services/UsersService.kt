@@ -2,6 +2,7 @@ package pe.edu.ulima.patronika.services
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.database.model.EmailVerificationCodeEntity
 import pe.edu.ulima.patronika.database.model.User
@@ -109,6 +110,7 @@ class UsersService (
         return userRepository.save(user)
     }
 
+    @Transactional
     fun requestEmailChangeCode(currentEmail: String) {
         // El código se envía al correo ACTUAL registrado en la base de datos,
         // por lo que ese correo debe existir.
