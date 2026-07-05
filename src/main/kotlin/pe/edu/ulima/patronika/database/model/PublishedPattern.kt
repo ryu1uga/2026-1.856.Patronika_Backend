@@ -2,12 +2,14 @@ package pe.edu.ulima.patronika.database.model
 
 import jakarta.persistence.*
 import java.time.Instant
-import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
-@Table(name = "comments")
-class Comment (
+@Table(
+    name = "published_patterns",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "pattern_id"])]
+)
+class PublishedPattern(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
@@ -17,17 +19,9 @@ class Comment (
     var user: User = User(),
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "publication_id", nullable = false)
-    var publication: Publication = Publication(),
+    @JoinColumn(name = "pattern_id", nullable = false)
+    var pattern: Pattern = Pattern(),
 
     @Column(nullable = false)
-    var content: String = "",
-
-    @Column(nullable = false)
-    var reportCount: Int = 0,
-
-    @Column(nullable = false)
-    var createdAt: Instant = Instant.now(),
-
-    var updatedAt: Instant? = null,
+    var publishedAt: Instant = Instant.now()
 )

@@ -31,6 +31,9 @@ import java.util.UUID
     var imageUrl: String? = null,
 
     var publishedAt: Instant? = null,
+
+    @Column(nullable = false)
+    var reportCount: Int = 0,
 ) {
     @OneToMany(mappedBy = "publication", cascade = [CascadeType.ALL], orphanRemoval = true)
     @JsonIgnore

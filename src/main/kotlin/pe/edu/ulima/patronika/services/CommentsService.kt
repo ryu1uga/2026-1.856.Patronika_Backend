@@ -8,7 +8,7 @@ import pe.edu.ulima.patronika.database.repository.CommentRepository
 import pe.edu.ulima.patronika.database.repository.PublicationRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.CommentRequest
-import pe.edu.ulima.patronika.dto.CommentResponseDto
+import pe.edu.ulima.patronika.dto.CommentResponse
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import java.time.Instant
@@ -20,18 +20,19 @@ class CommentsService (
     private val userRepository: UserRepository,
     private val publicationRepository: PublicationRepository
 ) {
-    private fun Comment.toDto() = CommentResponseDto(
+    private fun Comment.toDto() = CommentResponse(
         id = id,
         userId = user.id,
         publicationId = publication.id,
         content = content,
+        reportCount = reportCount,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
 
-    fun getAll(): List<CommentResponseDto> = commentRepository.findAll().map { it.toDto() }
+    fun getAll(): List<CommentResponse> = commentRepository.findAll().map { it.toDto() }
 
-    fun getComment(id: UUID): CommentResponseDto {
+    fun getComment(id: UUID): CommentResponse {
         return commentRepository.findById(id).orElseThrow { NotFoundException() }.toDto()
     }
 
@@ -50,7 +51,7 @@ class CommentsService (
     fun insertComment(
         userId: UUID,
         commentRequest: CommentRequest
-    ): CommentResponseDto {
+    ): CommentResponse {
         val user = getUser(userId)
         val publicationId = commentRequest.publicationId
             ?: throw BadRequestException("publicationId es requerido")
@@ -75,6 +76,12 @@ class CommentsService (
         comment.updatedAt = Instant.now()
 
         commentRepository.save(comment)
+    }
+
+    fun reportComment(id: UUID): CommentResponse {
+        val comment = getCommentEntity(id)
+        comment.reportCount += 1
+        return commentRepository.save(comment).toDto()
     }
 
     fun deleteComment(id: UUID) {

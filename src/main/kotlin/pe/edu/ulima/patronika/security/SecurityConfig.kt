@@ -34,8 +34,8 @@ class SecurityConfig(
                         "/api/auth/verify-code",
                         "/api/auth/register/request-code",
                         "/api/auth/register",
-                        "/api/auth/change-password/request-code",
-                        "/api/auth/change-password"
+                        "/api/auth/modify-password/request-code",
+                        "/api/auth/forgot-password"
                     )
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/users").permitAll()

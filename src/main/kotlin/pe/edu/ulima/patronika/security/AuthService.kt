@@ -9,7 +9,8 @@ import pe.edu.ulima.patronika.database.model.RefreshTokenEntity
 import pe.edu.ulima.patronika.database.repository.EmailVerificationCodeRepository
 import pe.edu.ulima.patronika.database.repository.RefreshTokenRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
-import pe.edu.ulima.patronika.dto.ChangePasswordRequest
+import pe.edu.ulima.patronika.dto.ForgotPasswordRequest
+import pe.edu.ulima.patronika.dto.LoginResponse
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
@@ -17,6 +18,8 @@ import pe.edu.ulima.patronika.services.EmailService
 import pe.edu.ulima.patronika.services.UsersService
 import java.security.MessageDigest
 import java.time.Instant
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Service
@@ -37,7 +40,7 @@ class AuthService(
     // -------------------------
 
     @Transactional
-    fun login(username: String, password: String): Map<String, String> {
+    fun login(username: String, password: String): LoginResponse {
         val user = userRepository.findByUsername(username)
             ?: throw BadCredentialsException("Usuario o contraseña incorrectos")
 
@@ -45,18 +48,31 @@ class AuthService(
             throw BadCredentialsException("Usuario o contraseña incorrectos")
         }
 
+        // Auto-levantar suspensión si el plazo ya terminó
+        if (user.status == 1 && user.suspensionEndDate != null && !LocalDate.now().isBefore(user.suspensionEndDate)) {
+            user.status = 0
+            user.suspensionEndDate = null
+        }
+
+        user.loggedIn = true
+        userRepository.save(user)
+
         val newAccessToken = jwtService.generateAccessToken(user.id.toString())
         val newRefreshToken = jwtService.generateRefreshToken(user.id.toString())
 
         storeRefreshToken(user.id!!, newRefreshToken)
 
-        user.status = 0
-        userRepository.save(user)
+        val daysRemaining = if (user.status == 1 && user.suspensionEndDate != null) {
+            ChronoUnit.DAYS.between(LocalDate.now(), user.suspensionEndDate)
+        } else null
 
-        return mapOf(
-            "userId" to user.id.toString(),
-            "accessToken" to newAccessToken,
-            "refreshToken" to newRefreshToken
+        return LoginResponse(
+            userId = user.id.toString(),
+            accessToken = newAccessToken,
+            refreshToken = newRefreshToken,
+            status = user.status,
+            suspensionEndDate = user.suspensionEndDate,
+            suspensionDaysRemaining = daysRemaining
         )
     }
 
@@ -113,7 +129,7 @@ class AuthService(
         // Borrar códigos previos del mismo email
         emailVerificationCodeRepository.deleteByEmail(email)
 
-        val code = (1000..9999).random().toString()
+        val code = (100000..999999).random().toString()
         val hashed = hashToken(code)
         val expiresAt = Instant.now().plusMillis(codeExpiryMs)
 
@@ -137,7 +153,7 @@ class AuthService(
         // Borrar códigos previos del mismo email
         emailVerificationCodeRepository.deleteByEmail(email)
 
-        val code = (1000..9999).random().toString()
+        val code = (100000..999999).random().toString()
         val hashed = hashToken(code)
         val expiresAt = Instant.now().plusMillis(codeExpiryMs)
 
@@ -168,10 +184,10 @@ class AuthService(
     }
 
     @Transactional
-    fun changePassword(changePasswordRequest: ChangePasswordRequest) {
-        val user = userRepository.findByEmail(changePasswordRequest.email)
+    fun changePassword(forgotPasswordRequest: ForgotPasswordRequest) {
+        val user = userRepository.findByEmail(forgotPasswordRequest.email)
 
-        user!!.hashedPassword = hashEncoder.encode(changePasswordRequest.password)
+        user!!.hashedPassword = hashEncoder.encode(forgotPasswordRequest.password)
 
         userRepository.save(user)
     }

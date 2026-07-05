@@ -3,9 +3,9 @@ package pe.edu.ulima.patronika.dto
 import java.time.Instant
 import java.util.UUID
 
-data class PatternLibraryResponseDto(
+data class PatternLibraryResponse(
     val id: UUID?,
     val userId: UUID?,
-    val pattern: PatternResponseDto,
+    val pattern: PatternResponse,
     val savedAt: Instant
 )

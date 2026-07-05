@@ -18,7 +18,7 @@ class OpenApiConfig {
             .info(
                 Info()
                     .title("Patronika API")
-                    .version("1.0")
+                    .version("v1.0")
                     .description("API documentation for Patronika")
             )
             .addSecurityItem(SecurityRequirement().addList(securitySchemeName))

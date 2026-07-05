@@ -6,7 +6,7 @@ import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.database.repository.TutorialProgressRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.TutorialProgressRequest
-import pe.edu.ulima.patronika.dto.TutorialProgressResponseDto
+import pe.edu.ulima.patronika.dto.TutorialProgressResponse
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import java.time.LocalDate
@@ -17,7 +17,7 @@ class TutorialProgressesService (
     private val tutorialProgressRepository: TutorialProgressRepository,
     private val userRepository: UserRepository
 ) {
-    private fun TutorialProgress.toDto() = TutorialProgressResponseDto(
+    private fun TutorialProgress.toDto() = TutorialProgressResponse(
         id = id,
         userId = user.id,
         tutorialId = tutorial.id,
@@ -25,10 +25,10 @@ class TutorialProgressesService (
         registeredDate = registeredDate
     )
 
-    fun getAll(): List<TutorialProgressResponseDto> =
+    fun getAll(): List<TutorialProgressResponse> =
         tutorialProgressRepository.findAll().map { it.toDto() }
 
-    fun getTutorialProgress(id: UUID): TutorialProgressResponseDto {
+    fun getTutorialProgress(id: UUID): TutorialProgressResponse {
         return tutorialProgressRepository.findById(id).orElseThrow { NotFoundException() }.toDto()
     }
 
@@ -43,7 +43,7 @@ class TutorialProgressesService (
     fun insertTutorialProgress(
         userId: UUID,
         tutorialProgressRequest: TutorialProgressRequest
-    ): TutorialProgressResponseDto {
+    ): TutorialProgressResponse {
         val user = getUser(userId)
 
         val tutorialProgress = TutorialProgress(

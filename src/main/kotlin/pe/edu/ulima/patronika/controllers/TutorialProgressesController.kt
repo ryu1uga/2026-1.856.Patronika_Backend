@@ -1,12 +1,14 @@
 package pe.edu.ulima.patronika.controllers
 
+import io.swagger.v3.oas.annotations.Operation
+
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.dto.TutorialProgressRequest
-import pe.edu.ulima.patronika.dto.TutorialProgressResponseDto
+import pe.edu.ulima.patronika.dto.TutorialProgressResponse
 import pe.edu.ulima.patronika.services.TutorialProgressesService
 import java.util.UUID
 
@@ -16,22 +18,25 @@ class TutorialProgressesController (
     private val tutorialProgressesService: TutorialProgressesService
 ) {
     @GetMapping
-    fun loadAllTutorialProgresses(): ResponseEntity<ApiResponse<List<TutorialProgressResponseDto>>> {
+    @Operation(summary = "List all tutorial progresses")
+    fun loadAllTutorialProgresses(): ResponseEntity<ApiResponse<List<TutorialProgressResponse>>> {
         val tutorialProgresses = tutorialProgressesService.getAll()
         return ResponseEntity.ok(ApiResponse(true, tutorialProgresses))
     }
 
     @GetMapping("/{id}")
-    fun loadTutorialProgress(@PathVariable id: UUID): ResponseEntity<ApiResponse<TutorialProgressResponseDto>> {
+    @Operation(summary = "Get tutorial progress by id")
+    fun loadTutorialProgress(@PathVariable id: UUID): ResponseEntity<ApiResponse<TutorialProgressResponse>> {
         val tutorialProgress = tutorialProgressesService.getTutorialProgress(id)
         return ResponseEntity.ok(ApiResponse(true, tutorialProgress))
     }
 
     @PostMapping
+    @Operation(summary = "Create tutorial progress")
     fun postTutorialProgress(
         @RequestHeader("UserId") userId: UUID,
         @Valid @RequestBody tutorialProgressRequest: TutorialProgressRequest
-    ): ResponseEntity<ApiResponse<TutorialProgressResponseDto>> {
+    ): ResponseEntity<ApiResponse<TutorialProgressResponse>> {
         val insertedTutorialProgress = tutorialProgressesService.insertTutorialProgress(userId, tutorialProgressRequest)
         return ResponseEntity
             .status(HttpStatus.CREATED)
@@ -39,6 +44,7 @@ class TutorialProgressesController (
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update tutorial progress")
     fun putTutorialProgress(
         @PathVariable id: UUID,
         @Valid @RequestBody tutorialProgressRequest: TutorialProgressRequest
@@ -48,6 +54,7 @@ class TutorialProgressesController (
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete tutorial progress")
     fun deleteTutorialProgress(@PathVariable id: UUID) : ResponseEntity<ApiResponse<String>> {
         tutorialProgressesService.deleteTutorialProgress(id)
         return ResponseEntity.ok(ApiResponse(true, "Progreso de tutorial eliminado exitosamente"))

@@ -1,0 +1,1 @@
+ALTER TABLE publications ADD COLUMN report_count INTEGER NOT NULL DEFAULT 0;

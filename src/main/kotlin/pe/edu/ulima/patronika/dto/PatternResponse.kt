@@ -3,7 +3,7 @@ package pe.edu.ulima.patronika.dto
 import java.time.Instant
 import java.util.UUID
 
-data class PatternResponseDto(
+data class PatternResponse(
     val id: UUID?,
     val userId: UUID?,
     val name: String,

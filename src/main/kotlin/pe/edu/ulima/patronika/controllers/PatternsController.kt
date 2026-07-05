@@ -1,4 +1,6 @@
 package pe.edu.ulima.patronika.controllers
+
+import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Encoding
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
@@ -11,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.dto.PatternCreateRequest
 import pe.edu.ulima.patronika.dto.PatternRequest
-import pe.edu.ulima.patronika.dto.PatternResponseDto
+import pe.edu.ulima.patronika.dto.PatternResponse
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.services.PatternsService
 import java.util.UUID
@@ -22,19 +24,22 @@ class PatternsController (
     private val patternsService: PatternsService
 ) {
     @GetMapping
-    fun loadAllPatterns(): ResponseEntity<ApiResponse<List<PatternResponseDto>>> {
+    @Operation(summary = "List all patterns")
+    fun loadAllPatterns(): ResponseEntity<ApiResponse<List<PatternResponse>>> {
         val patterns = patternsService.getAll()
         return ResponseEntity.ok(ApiResponse(true, patterns))
     }
 
     @GetMapping("/user/{userId}")
-    fun loadPatternsByUserId(@PathVariable userId: UUID): ResponseEntity<ApiResponse<List<PatternResponseDto>>> {
+    @Operation(summary = "List patterns by user")
+    fun loadPatternsByUserId(@PathVariable userId: UUID): ResponseEntity<ApiResponse<List<PatternResponse>>> {
         val patterns = patternsService.getAllByUserId(userId)
         return ResponseEntity.ok(ApiResponse(true, patterns))
     }
 
     @GetMapping("/{id}")
-    fun loadPattern(@PathVariable id: UUID): ResponseEntity<ApiResponse<PatternResponseDto>> {
+    @Operation(summary = "Get pattern by id")
+    fun loadPattern(@PathVariable id: UUID): ResponseEntity<ApiResponse<PatternResponse>> {
         val pattern = patternsService.getPattern(id)
         return ResponseEntity.ok(ApiResponse(true, pattern))
     }
@@ -46,11 +51,12 @@ class PatternsController (
             encoding = [Encoding(name = "request", contentType = MediaType.APPLICATION_JSON_VALUE)]
         )]
     )
+    @Operation(summary = "Create pattern")
     fun createPattern(
         @RequestHeader("UserId") userId: UUID,
         @RequestPart("request") request: PatternCreateRequest,
         @RequestPart("image", required = false) image: MultipartFile?
-    ): ResponseEntity<ApiResponse<PatternResponseDto>> {
+    ): ResponseEntity<ApiResponse<PatternResponse>> {
         if (request.width < 1) throw BadRequestException("El width debe ser mayor a 0")
         if (request.height < 1) throw BadRequestException("El height debe ser mayor a 0")
 
@@ -61,6 +67,7 @@ class PatternsController (
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update pattern")
     fun updatePattern(
         @PathVariable id: UUID,
         @Valid @RequestBody patternRequest: PatternRequest
@@ -70,6 +77,7 @@ class PatternsController (
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete pattern")
     fun deletePattern(@PathVariable id: UUID) : ResponseEntity<ApiResponse<String>> {
         patternsService.deletePattern(id)
         return ResponseEntity.ok(ApiResponse(true, "Patrón eliminado exitosamente"))

@@ -6,6 +6,5 @@ import java.time.LocalDateTime
 data class TutorialRequest (
     val title: String = "",
     val description: String = "",
-    val difficulty: Int = 0,
     val url: String = "",
 )
