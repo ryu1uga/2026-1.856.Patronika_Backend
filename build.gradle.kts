@@ -73,10 +73,12 @@ pitest {
 		"pe.edu.ulima.patronika.services.ImageConvolutionServiceTest",
 		"pe.edu.ulima.patronika.security.JwtServiceTest",
 		"pe.edu.ulima.patronika.services.UsersServiceTest",
-		"pe.edu.ulima.patronika.security.AuthServiceTest"
+		"pe.edu.ulima.patronika.security.AuthServiceTest",
+		"pe.edu.ulima.patronika.services.PatternsServiceTest"
 	))
 	mutators.set(setOf("DEFAULTS"))
 	outputFormats.set(setOf("HTML"))
 	timestampedReports.set(false)
 	threads.set(4)
+	avoidCallsTo.set(setOf("kotlin.jvm.internal.Intrinsics"))
 }
