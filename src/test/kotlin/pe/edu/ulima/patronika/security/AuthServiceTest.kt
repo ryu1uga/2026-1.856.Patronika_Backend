@@ -3,6 +3,7 @@ package pe.edu.ulima.patronika.security
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -23,7 +24,7 @@ import pe.edu.ulima.patronika.database.model.User
 import pe.edu.ulima.patronika.database.repository.EmailVerificationCodeRepository
 import pe.edu.ulima.patronika.database.repository.RefreshTokenRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
-import pe.edu.ulima.patronika.dto.ChangePasswordRequest
+import pe.edu.ulima.patronika.dto.ForgotPasswordRequest
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
@@ -33,6 +34,7 @@ import java.security.MessageDigest
 import java.util.Base64
 import java.util.UUID
 import java.time.Instant
+import java.time.LocalDate
 
 @ExtendWith(MockitoExtension::class)
 class AuthServiceTest {
@@ -76,8 +78,16 @@ class AuthServiceTest {
         username: String = "user",
         email: String = "user@example.com",
         hashedPassword: String = "hashed-real",
-        status: Int = 0
-    ) = User(id = id, username = username, email = email, hashedPassword = hashedPassword, status = status)
+        status: Int = 0,
+        suspendUserEndDate: LocalDate? = null
+    ) = User(
+        id = id,
+        username = username,
+        email = email,
+        hashedPassword = hashedPassword,
+        status = status,
+        suspensionEndDate = suspendUserEndDate
+        )
 
     private fun sha256Base64(raw: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
@@ -87,7 +97,7 @@ class AuthServiceTest {
     //Login
     @Test
     fun login_flujoCompleto_DevuelveToken(){
-        val user = buildUser(status = 1)
+        val user = buildUser(status = 0)
         whenever(userRepository.findByUsername("user")).thenReturn(user)
         whenever(hashEncoder.matches("clave123", user.hashedPassword)).thenReturn(true)
         whenever(jwtService.generateAccessToken(user.id.toString())).thenReturn("access-token")
@@ -97,14 +107,47 @@ class AuthServiceTest {
 
         val result =authService.login("user", "clave123")
 
-        assertEquals(user.id.toString(),result["userId"])
-        assertEquals("access-token", result["accessToken"])
-        assertEquals("refresh-token", result["refreshToken"])
+        assertEquals(user.id.toString(),result.userId)
+        assertEquals("access-token", result.accessToken)
+        assertEquals("refresh-token", result.refreshToken)
 
 
+        assertTrue(user.loggedIn)
         assertEquals(0, user.status)
         verify(userRepository).findByUsername("user")
         verify(refreshTokenRepository).save(any())
+    }
+
+    @Test
+    fun login_suspensionVencida(){
+        val user = buildUser(status = 1, suspendUserEndDate = LocalDate.now().minusDays(1))
+        whenever(userRepository.findByUsername("user")).thenReturn(user)
+        whenever(hashEncoder.matches("clave123", user.hashedPassword)).thenReturn(true)
+        whenever(jwtService.generateAccessToken(user.id.toString())).thenReturn("access-token")
+        whenever(jwtService.generateRefreshToken(user.id.toString())).thenReturn("refresh-token")
+        whenever(jwtService.refreshTokenValidityMs).thenReturn(tokenExpiryMs)
+
+        val result = authService.login("user", "clave123")
+
+        assertEquals(0, user.status)
+        assertNull(user.suspensionEndDate)
+        assertNull(result.suspensionDaysRemaining)
+    }
+
+    @Test
+    fun login_suspensionActiva(){
+        val user = buildUser(status = 1, suspendUserEndDate = LocalDate.now().plusDays(1))
+        whenever(userRepository.findByUsername("user")).thenReturn(user)
+        whenever(hashEncoder.matches("clave123", user.hashedPassword)).thenReturn(true)
+        whenever(jwtService.generateAccessToken(user.id.toString())).thenReturn("access-token")
+        whenever(jwtService.generateRefreshToken(user.id.toString())).thenReturn("refresh-token")
+        whenever(jwtService.refreshTokenValidityMs).thenReturn(tokenExpiryMs)
+
+        val result = authService.login("user", "clave123")
+
+        assertEquals(1, user.status)
+        assertEquals(LocalDate.now().plusDays(1), user.suspensionEndDate)
+        assertEquals(1, result.suspensionDaysRemaining)
     }
 
     @Test
@@ -302,7 +345,7 @@ class AuthServiceTest {
     @Test
     fun CambioContraseña_FlujoCompleto(){
         val user = buildUser(hashedPassword = "viejo_Hash")
-        val req = ChangePasswordRequest(email = user.email, password = "NuevaContraseña123")
+        val req = ForgotPasswordRequest(email = user.email, password = "NuevaContraseña123")
         whenever(userRepository.findByEmail(user.email)).thenReturn(user)
         whenever(hashEncoder.encode("NuevaContraseña123")).thenReturn("hash_nuevo")
 
@@ -313,7 +356,7 @@ class AuthServiceTest {
 
     @Test
     fun CambioContraseña_EmailInexistente(){
-        val req = ChangePasswordRequest(email = "inexistente@email.com", password = "123")
+        val req = ForgotPasswordRequest(email = "inexistente@email.com", password = "123")
         whenever(userRepository.findByEmail(req.email)).thenReturn(null)
 
         assertThrows(NullPointerException::class.java) {

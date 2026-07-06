@@ -4,22 +4,25 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.mock.web.MockMultipartFile
 import pe.edu.ulima.patronika.database.model.User
+import pe.edu.ulima.patronika.database.repository.EmailVerificationCodeRepository
 import pe.edu.ulima.patronika.database.repository.UserRepository
+import pe.edu.ulima.patronika.dto.UserChangePasswordRequest
 import pe.edu.ulima.patronika.dto.UserRequest
+import pe.edu.ulima.patronika.dto.UserUpdateRequest
+import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.ConflictException
 import pe.edu.ulima.patronika.exception.NotFoundException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
@@ -40,17 +43,45 @@ class UsersServiceTest {
     @Mock
     private lateinit var cloudinaryService: CloudinaryService
 
-    @InjectMocks
+    @Mock
+    private lateinit var emailService: EmailService
+
+    @Mock
+    private lateinit var emailVerificationCodeRepository: EmailVerificationCodeRepository
+
     private lateinit var usersService: UsersService
 
     private fun buildUserRequest(
         username: String = "ana123",
         email: String = "ana@example.com",
-        password: String = "Clave123!"
+        password: String = "Clave123!",
+        status: Int = 1
     ) = UserRequest(
         username = username,
         email = email,
-        password = password
+        password = password,
+        status = status,
+    )
+
+    private fun buildUserUpdateRequest(
+        username: String = "ana123",
+        email: String = "ana@example.com",
+        isAdmin: Boolean = false,
+        status: Int = 1
+    ) = UserUpdateRequest(
+        username = username,
+        email = email,
+        isAdmin = isAdmin,
+        status = status,
+    )
+    private fun buildUserChangePasswordRequest(
+        email: String = "ana@example.com",
+        currentPassword: String = "Clave123!",
+        newPassword: String = "Password123!",
+    ) = UserChangePasswordRequest(
+        email = email,
+        currentPassword = currentPassword,
+        newPassword = newPassword,
     )
 
     private fun buildUser(
@@ -71,6 +102,20 @@ class UsersServiceTest {
         activateNotification = activateNotification,
         suspensionEndDate = suspensionEndDate
     )
+
+    private val codeExpiryMs = 10 * 60 * 1000L
+
+    @BeforeEach
+    fun setUp() {
+        usersService = UsersService(
+            userRepository = userRepository,
+            hashEncoder = hashEncoder,
+            cloudinaryService = cloudinaryService,
+            emailService = emailService,
+            emailVerificationCodeRepository = emailVerificationCodeRepository,
+            codeExpiryMs = codeExpiryMs
+        )
+    }
 
     //registrar usuario
 
@@ -165,12 +210,12 @@ class UsersServiceTest {
 
     //Update user
     @Test
-    fun updateUsuario_ActualizaUsuario(){
+    fun updateUsuario_FlujoCompleto(){
         val TestId = UUID.randomUUID()
-        val User = buildUser(id = TestId, email = "test@example.com", username = "User",isAdmin = true, status=1,activateNotification = false,suspensionEndDate =LocalDate.of(2026, 11, 4) )
-        val request = buildUserRequest(email = "testexample.com")
+        val User = buildUser(id = TestId, email = "test@example.com", username = "User",isAdmin = true, status=0,activateNotification = false,suspensionEndDate =LocalDate.of(2026, 11, 4) )
+        val request = buildUserUpdateRequest(email = "testexample.com",)
 
-        whenever(userRepository.findByEmail(request.email)).thenReturn(null)
+        whenever(userRepository.findByEmail(request.email!!)).thenReturn(null)
         whenever(userRepository.findById(TestId)).thenReturn(Optional.of(User))
         usersService.updateUser(TestId, request)
 
@@ -178,7 +223,6 @@ class UsersServiceTest {
         assertEquals(request.email, User.email)
         assertEquals(request.isAdmin, User.isAdmin)
         assertEquals(request.status, User.status)
-        assertEquals(request.activateNotification,User.activateNotification)
         assertEquals(request.suspensionEndDate,User.suspensionEndDate)
 
         verify(userRepository).save(User)
@@ -191,17 +235,39 @@ class UsersServiceTest {
 
         val ana = buildUser(id =TestId, email = "ana@example.com")
         val juan = buildUser(id =TestId2, email = "compartido@example.com")
-        val request = buildUserRequest(email = "compartido@example.com") //el request que manda ana para cambiar a este email
+        val request = buildUserUpdateRequest(email = "compartido@example.com") //el request que manda ana para cambiar a este email
 
         whenever(userRepository.findById(TestId)).thenReturn(Optional.of(ana))
-        whenever(userRepository.findByEmail(request.email)).thenReturn(juan)
+        whenever(userRepository.findByEmail(request.email!!)).thenReturn(juan)
 
 
         val error = assertThrows(ConflictException::class.java){
             usersService.updateUser(TestId, request)
         }
-        assertEquals("El correo ya está registrado", error.message)
+        assertEquals("Ese correo ya existe, por favor elige otro", error.message)
         assertEquals("ana@example.com", ana.email)
+        verify(userRepository, never()).save(any())
+
+    }
+
+    @Test
+    fun updateUsuario_UsuarioconMismoUsername(){
+        val TestId = UUID.randomUUID()
+        val TestId2 = UUID.randomUUID()
+
+        val ana = buildUser(id =TestId, username = "ana")
+        val juan = buildUser(id =TestId2, username = "juan")
+        val request = buildUserUpdateRequest(username = "juan")
+
+        whenever(userRepository.findById(TestId)).thenReturn(Optional.of(ana))
+        whenever(userRepository.findByUsername(request.username!!)).thenReturn(juan)
+
+
+        val error = assertThrows(ConflictException::class.java){
+            usersService.updateUser(TestId, request)
+        }
+        assertEquals("Ese nombre de usuario ya existe, por favor elige otro", error.message)
+        assertEquals("ana", ana.username)
         verify(userRepository, never()).save(any())
 
     }
@@ -241,44 +307,118 @@ class UsersServiceTest {
 
 
     }
+    //ResquestEmailChangeCode
+    @Test
+    fun requestEmailChangeCode_FlujoCompleto(){
+        val user = buildUser(username ="ana",email = "ana@gmail.com")
+        whenever(userRepository.findByEmail("ana@gmail.com")).thenReturn(user)
+        usersService.requestEmailChangeCode(user.email)
+
+        verify(emailVerificationCodeRepository).deleteByEmail("ana@gmail.com")
+        verify(emailVerificationCodeRepository).save(any())
+        verify(emailService).sendEmailChangeCode(eq("ana@gmail.com"),any())
+    }
+    @Test
+    fun requestEmailChangeCode_EmailnoEncontrado(){
+        val user = buildUser(username ="ana", email = "ana@gmail.com")
+        whenever(userRepository.findByEmail("ana@gmail.com")).thenReturn(null)
+
+        val error = assertThrows(NotFoundException::class.java) {
+            usersService.requestEmailChangeCode(user.email)
+        }
+        assertEquals("No existe un usuario con ese correo",error.message)
+    }
+
+    //changePassword
+    @Test
+    fun ChangePassword_FlujoCompleto(){
+        val user = buildUser(username ="ana",email = "ana@gmail.com")
+        val req = buildUserChangePasswordRequest(email = "ana@gmail.com", currentPassword = "clave123")
+
+
+        whenever(userRepository.findByEmail("ana@gmail.com")).thenReturn(user)
+        whenever(hashEncoder.matches(req.currentPassword, user.hashedPassword)).thenReturn(true)
+        whenever(hashEncoder.encode(req.newPassword)).thenReturn("hash-nuevo")
+
+        usersService.changePassword(req)
+
+        assertEquals("hash-nuevo", user.hashedPassword)
+        verify(userRepository).save(user)
+
+    }
+
+    @Test
+    fun changePassword_HashDoesNotMatch(){
+        val user = buildUser(username ="ana",email = "ana@gmail.com")
+        val req = buildUserChangePasswordRequest(email = "ana@gmail.com", currentPassword = "clave123")
+
+
+        whenever(userRepository.findByEmail("ana@gmail.com")).thenReturn(user)
+        whenever(hashEncoder.matches(req.currentPassword, user.hashedPassword)).thenReturn(false)
+
+        val error = assertThrows(BadRequestException::class.java) {
+            usersService.changePassword(req)
+        }
+        assertEquals("La contraseña actual es incorrecta", error.message)
+    }
 
     //DeleteUser
     @Test
     fun deleteUser_flujoCompleto(){
-        val AdminId = UUID.randomUUID()
-        val Admin = buildUser(id = AdminId, username ="user", isAdmin = true)
-        val Objetivo = buildUser(username="victima")
-
-        whenever(userRepository.findById(AdminId)).thenReturn(Optional.of(Admin))
-        whenever(userRepository.findByUsername("victima")).thenReturn(Objetivo)
-        usersService.deleteUser("victima",AdminId)
+        val TargetId = UUID.randomUUID()
+        val Objetivo = buildUser(id= TargetId, username ="victima")
+        whenever(userRepository.findById(TargetId)).thenReturn(Optional.of(Objetivo))
+        usersService.deleteUser(TargetId)
         verify(userRepository).delete(Objetivo)
     }
 
     @Test
-    fun deleteUser_noEsAdmin(){
-        val falseAdminId = UUID.randomUUID()
-        val falseAdmin = buildUser(id = falseAdminId, isAdmin = false)
-
-        whenever(userRepository.findById(falseAdminId)).thenReturn(Optional.of(falseAdmin))
-        assertThrows(UnauthorizedException::class.java) {
-            usersService.deleteUser("victima",falseAdminId)
-        }
+    fun deleteUser_idInexistente_lanzaNotFoundException(){
+        val targetId = UUID.randomUUID()
+        whenever(userRepository.findById(targetId)).thenReturn(Optional.empty())
+        assertThrows(NotFoundException::class.java) { usersService.deleteUser(targetId) }
         verify(userRepository, never()).delete(any())
     }
 
+    //SuspendUser
     @Test
-    fun deleteUser_usuarioVictimaNoEncontrado(){
-        val AdminId = UUID.randomUUID()
-        val Admin = buildUser(id = AdminId, isAdmin = true)
+    fun suspendUser_FlujoCompleto(){
+        val adminId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val target = buildUser(targetId,"target", isAdmin = false,status=0)
+        val admin = buildUser(adminId,"admin", isAdmin = true)
+        whenever(userRepository.findById(adminId)).thenReturn(Optional.of(admin))
+        whenever(userRepository.findById(targetId)).thenReturn(Optional.of(target))
 
-        whenever(userRepository.findById(AdminId)).thenReturn(Optional.of(Admin))
-        whenever(userRepository.findByUsername("falseUser")).thenReturn(null)
+        usersService.suspendUser(adminId, targetId, days = 7, reason = "Comportamiento inapropiado")
 
-        assertThrows(NotFoundException::class.java) {
-            usersService.deleteUser("falseUser",AdminId)
-        }
+
+        assertEquals(1,target.status)
+        assertEquals(LocalDate.now().plusDays(7),target.suspensionEndDate)
+        verify(userRepository).save(target)
+        verify(emailService).sendSuspensionEmail(
+            toEmail = target.email,
+            username = target.username,
+            reason = "Comportamiento inapropiado",
+            days = 7,
+            endDate = target.suspensionEndDate!!
+        )
     }
+
+    @Test
+    fun suspendUser_UserNoEsAdmin(){
+        val adminId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val admin = buildUser(adminId,"admin", isAdmin = false)
+        whenever(userRepository.findById(adminId)).thenReturn(Optional.of(admin))
+
+        val error = assertThrows(UnauthorizedException::class.java) {
+            usersService.suspendUser(adminId, targetId, days = 7, reason = "Comportamiento inapropiado")
+        }
+        verify(userRepository,never()).save(any())
+
+    }
+
     //getALL
     @Test
     fun getAll_delegaEnRepositorio() {
