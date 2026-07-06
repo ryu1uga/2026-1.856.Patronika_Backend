@@ -1,5 +1,7 @@
 package pe.edu.ulima.patronika.controllers
 
+import io.swagger.v3.oas.annotations.Operation
+
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Encoding
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
@@ -22,18 +24,21 @@ class AuthController(
     private val userService: UsersService,
 ) {
     @PostMapping("/login")
+    @Operation(summary = "User login")
     fun login(@Valid @RequestBody body: AuthRequest): ResponseEntity<ApiResponse<LoginResponse>> {
         val loginResponse = authService.login(body.username, body.password)
         return ResponseEntity.ok(ApiResponse(true, loginResponse))
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "Refresh access token")
     fun refresh(@Valid @RequestBody body: RefreshTokenRequest): ResponseEntity<ApiResponse<Map<String, String>>> {
         val tokenPair = authService.refresh(body.refreshToken)
         return ResponseEntity.ok(ApiResponse(true, tokenPair))
     }
 
     @PostMapping("/logout/{id}")
+    @Operation(summary = "Log out user")
     fun logout(
         @PathVariable id: UUID,
         @Valid @RequestBody body: RefreshTokenRequest
@@ -43,12 +48,14 @@ class AuthController(
     }
 
     @PostMapping("/verify-code")
+    @Operation(summary = "Verify email code")
     fun verifyCode(@Valid @RequestBody body: VerifyCodeRequest): ResponseEntity<ApiResponse<String>> {
         authService.verifyCode(body.email, body.code)
         return ResponseEntity.ok(ApiResponse(true, "Código verificado exitosamente"))
     }
 
     @PostMapping("/register/request-code")
+    @Operation(summary = "Send registration code")
     fun requestCode(@Valid @RequestBody body: VerificationCodeRequest): ResponseEntity<ApiResponse<String>> {
         authService.requestVerificationCode(body.email)
         return ResponseEntity.ok(ApiResponse(true, "Código enviado al correo"))
@@ -64,6 +71,7 @@ class AuthController(
             encoding = [Encoding(name = "userRequest", contentType = MediaType.APPLICATION_JSON_VALUE)]
         )]
     )
+    @Operation(summary = "Register new user")
     fun register(
         @RequestPart("userRequest") @Valid userRequest: UserRequest,
         @RequestPart("file", required = false) file: MultipartFile?
@@ -72,14 +80,16 @@ class AuthController(
         return ResponseEntity.ok(ApiResponse(true, result))
     }
 
-    @PostMapping("/change-password/request-code")
+    @PostMapping("/modify-password/request-code")
+    @Operation(summary = "Send password reset code")
     fun requestCodeForExistingEmail(@Valid @RequestBody body: VerificationCodeRequest): ResponseEntity<ApiResponse<String>> {
         authService.requestVerificationCodeOnExistingEmail(body.email)
         return ResponseEntity.ok(ApiResponse(true, "Código enviado al correo"))
     }
 
-    @PostMapping("/change-password")
-    fun changePassword(@Valid @RequestBody body: ChangePasswordRequest): ResponseEntity<ApiResponse<String>> {
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Reset forgotten password")
+    fun changePassword(@Valid @RequestBody body: ForgotPasswordRequest): ResponseEntity<ApiResponse<String>> {
         authService.changePassword(body)
         return ResponseEntity.ok(ApiResponse(true, "Contraseña cambiada exitosamente"))
     }

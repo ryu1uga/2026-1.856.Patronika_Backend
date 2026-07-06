@@ -2,6 +2,7 @@ package pe.edu.ulima.patronika.database.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import pe.edu.ulima.patronika.database.model.User
+import java.time.LocalDate
 import java.util.*
 
 
@@ -9,5 +10,5 @@ interface UserRepository: JpaRepository<User, UUID> {
     fun findByUsername(username: String): User?
     fun getUsersById(id: UUID): MutableList<User>
     fun findByEmail(email: String): User?
-    fun getUsersByEmail(email: String): MutableList<User>
+    fun findByStatusAndSuspensionEndDateLessThanEqual(status: Int, date: LocalDate): List<User>
 }

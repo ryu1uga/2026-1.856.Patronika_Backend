@@ -147,4 +147,10 @@ class PublicationsService (
         publication.reportCount++
         publicationRepository.save(publication)
     }
+
+    fun clearReports(id: UUID) {
+        val publication = getPublicationEntity(id)
+        publication.reportCount = 0
+        publicationRepository.save(publication)
+    }
 }

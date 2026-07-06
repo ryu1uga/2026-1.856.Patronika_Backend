@@ -44,6 +44,12 @@ class User (
 
     var suspensionEndDate: LocalDate? = null,
 
+    @Column(name = "suspension_start_date")
+    var suspensionStartDate: LocalDate? = null,
+
+    @Column(name = "suspension_reason")
+    var suspensionReason: String? = null,
+
     var token: String = ""
 ) {
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)

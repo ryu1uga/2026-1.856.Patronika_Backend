@@ -1,5 +1,7 @@
 package pe.edu.ulima.patronika.controllers
 
+import io.swagger.v3.oas.annotations.Operation
+
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Encoding
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
@@ -21,12 +23,14 @@ class PublicationsController (
     private val publicationsService: PublicationsService,
 ) {
     @GetMapping
+    @Operation(summary = "List all publications")
     fun loadAllPublications(): ResponseEntity<ApiResponse<List<PublicationResponse>>> {
         val publications = publicationsService.getAll()
         return ResponseEntity.ok(ApiResponse(true, publications))
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get publication by id")
     fun loadPublication(@PathVariable id: UUID): ResponseEntity<ApiResponse<PublicationResponse>> {
         val publication = publicationsService.getPublication(id)
         return ResponseEntity.ok(ApiResponse(true, publication))
@@ -39,6 +43,7 @@ class PublicationsController (
             encoding = [Encoding(name = "publication", contentType = MediaType.APPLICATION_JSON_VALUE)]
         )]
     )
+    @Operation(summary = "Create publication")
     fun postPublication(
         @RequestPart("publication") publicationRequest: PublicationRequest,
         @RequestPart("file", required = false) file: MultipartFile?
@@ -54,6 +59,7 @@ class PublicationsController (
             encoding = [Encoding(name = "publication", contentType = MediaType.APPLICATION_JSON_VALUE)]
         )]
     )
+    @Operation(summary = "Update publication")
     fun putPublication(
         @PathVariable id: UUID,
         @RequestPart("publication") publicationRequest: PublicationRequest,
@@ -64,12 +70,14 @@ class PublicationsController (
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete publication")
     fun deletePublication(@PathVariable id: UUID): ResponseEntity<ApiResponse<String>> {
         publicationsService.deletePublication(id)
         return ResponseEntity.ok(ApiResponse(true, "Publicación eliminada exitosamente"))
     }
 
     @DeleteMapping("/{id}/admin")
+    @Operation(summary = "Admin delete publication")
     fun adminDeletePublication(
         @PathVariable id: UUID,
         @RequestBody body: DeletePublicationRequest
@@ -79,8 +87,16 @@ class PublicationsController (
     }
 
     @PostMapping("/{id}/report")
+    @Operation(summary = "Report publication")
     fun reportPublication(@PathVariable id: UUID): ResponseEntity<ApiResponse<String>> {
         publicationsService.reportPublication(id)
         return ResponseEntity.ok(ApiResponse(true, "Publicación reportada"))
+    }
+
+    @PostMapping("/{id}/clear-reports")
+    @Operation(summary = "Clear publication reports")
+    fun clearPublicationReports(@PathVariable id: UUID): ResponseEntity<ApiResponse<String>> {
+        publicationsService.clearReports(id)
+        return ResponseEntity.ok(ApiResponse(true, "Reportes eliminados"))
     }
 }

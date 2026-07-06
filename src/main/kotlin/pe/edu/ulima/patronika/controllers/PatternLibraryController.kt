@@ -1,5 +1,7 @@
 package pe.edu.ulima.patronika.controllers
 
+import io.swagger.v3.oas.annotations.Operation
+
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -17,6 +19,7 @@ class PatternLibraryController(
 ) {
     // Guardar un patrón en la biblioteca del usuario
     @PostMapping
+    @Operation(summary = "Save pattern to library")
     fun savePattern(
         @RequestBody request: PatternLibraryRequest
     ): ResponseEntity<ApiResponse<PatternLibraryResponse>> {
@@ -26,6 +29,7 @@ class PatternLibraryController(
 
     // Quitar un patrón de la biblioteca del usuario
     @DeleteMapping
+    @Operation(summary = "Remove pattern from library")
     fun removePattern(
         @RequestBody request: PatternLibraryRequest
     ): ResponseEntity<ApiResponse<String>> {
@@ -35,6 +39,7 @@ class PatternLibraryController(
 
     // Obtener la biblioteca de un usuario (solo los patrones guardados)
     @GetMapping("/user/{userId}")
+    @Operation(summary = "Get user library")
     fun getLibrary(
         @PathVariable userId: UUID
     ): ResponseEntity<ApiResponse<List<PatternLibraryResponse>>> {
@@ -44,6 +49,7 @@ class PatternLibraryController(
 
     // Obtener todos los patrones de un usuario: propios + guardados en biblioteca
     @GetMapping("/user/{userId}/all")
+    @Operation(summary = "Get user's own and saved patterns")
     fun getAllPatterns(
         @PathVariable userId: UUID
     ): ResponseEntity<ApiResponse<List<PatternResponse>>> {
