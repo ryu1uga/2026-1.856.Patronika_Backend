@@ -92,4 +92,11 @@ class PublicationsController (
         publicationsService.reportPublication(id)
         return ResponseEntity.ok(ApiResponse(true, "Publicación reportada"))
     }
+
+    @PostMapping("/{id}/clear-reports")
+    @Operation(summary = "Clear publication reports")
+    fun clearPublicationReports(@PathVariable id: UUID): ResponseEntity<ApiResponse<String>> {
+        publicationsService.clearReports(id)
+        return ResponseEntity.ok(ApiResponse(true, "Reportes eliminados"))
+    }
 }

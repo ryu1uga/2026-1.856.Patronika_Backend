@@ -84,6 +84,12 @@ class CommentsService (
         return commentRepository.save(comment).toDto()
     }
 
+    fun clearReports(id: UUID): CommentResponse {
+        val comment = getCommentEntity(id)
+        comment.reportCount = 0
+        return commentRepository.save(comment).toDto()
+    }
+
     fun deleteComment(id: UUID) {
         if (!commentRepository.existsById(id)) throw NotFoundException()
         commentRepository.deleteById(id)

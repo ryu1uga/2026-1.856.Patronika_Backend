@@ -13,6 +13,7 @@ import pe.edu.ulima.patronika.dto.ForgotPasswordRequest
 import pe.edu.ulima.patronika.dto.LoginResponse
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.ConflictException
+import pe.edu.ulima.patronika.exception.NotFoundException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
 import pe.edu.ulima.patronika.services.EmailService
 import pe.edu.ulima.patronika.services.UsersService
@@ -51,7 +52,9 @@ class AuthService(
         // Auto-levantar suspensión si el plazo ya terminó
         if (user.status == 1 && user.suspensionEndDate != null && !LocalDate.now().isBefore(user.suspensionEndDate)) {
             user.status = 0
+            user.suspensionStartDate = null
             user.suspensionEndDate = null
+            user.suspensionReason = null
         }
 
         user.loggedIn = true
@@ -147,7 +150,7 @@ class AuthService(
     @Transactional
     fun requestVerificationCodeOnExistingEmail(email: String) {
         if (userRepository.findByEmail(email) == null) {
-            throw ConflictException("El correo no está registrado")
+            throw NotFoundException("El correo no está registrado")
         }
 
         // Borrar códigos previos del mismo email
@@ -186,8 +189,9 @@ class AuthService(
     @Transactional
     fun changePassword(forgotPasswordRequest: ForgotPasswordRequest) {
         val user = userRepository.findByEmail(forgotPasswordRequest.email)
+            ?: throw NotFoundException("No existe un usuario con ese correo")
 
-        user!!.hashedPassword = hashEncoder.encode(forgotPasswordRequest.password)
+        user.hashedPassword = hashEncoder.encode(forgotPasswordRequest.password)
 
         userRepository.save(user)
     }

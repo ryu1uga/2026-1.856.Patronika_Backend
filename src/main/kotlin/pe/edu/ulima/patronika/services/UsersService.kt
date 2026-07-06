@@ -57,9 +57,6 @@ class UsersService (
             hashedPassword = hashEncoder.encode(userRequest.password),
             profileImageUrl = uploadedUrl,
             isAdmin = userRequest.isAdmin,
-            status = userRequest.status,
-            activateNotification = userRequest.activateNotification,
-            suspensionEndDate = userRequest.suspensionEndDate
         )
 
         return userRepository.save(userEntity)
@@ -88,8 +85,6 @@ class UsersService (
         }
 
         req.isAdmin?.let { user.isAdmin = it }
-        req.status?.let { user.status = it }
-        req.suspensionEndDate.let { user.suspensionEndDate = it }
 
         userRepository.save(user)
     }
@@ -142,7 +137,8 @@ class UsersService (
     }
 
     fun changePassword(req: UserChangePasswordRequest) {
-        val user = userRepository.findByEmail(req.email)!!
+        val user = userRepository.findByEmail(req.email)
+            ?: throw NotFoundException("No existe un usuario con ese correo")
 
         if (!hashEncoder.matches(req.currentPassword, user.hashedPassword)) {
             throw BadRequestException("La contraseña actual es incorrecta")
@@ -163,7 +159,9 @@ class UsersService (
 
         val target = getUser(targetId)
         target.status = 1
+        target.suspensionStartDate = LocalDate.now()
         target.suspensionEndDate = LocalDate.now().plusDays(days.toLong())
+        target.suspensionReason = reason
         userRepository.save(target)
 
         emailService.sendSuspensionEmail(
@@ -173,5 +171,51 @@ class UsersService (
             days = days,
             endDate = target.suspensionEndDate!!
         )
+    }
+
+    fun reactivateUser(adminId: UUID, targetId: UUID) {
+        val admin = getUser(adminId)
+        if (admin.isAdmin != true) throw UnauthorizedException()
+
+        val target = getUser(targetId)
+        if (target.status != 1) {
+            throw BadRequestException("El usuario no está suspendido")
+        }
+
+        target.status = 0
+        target.suspensionStartDate = null
+        target.suspensionEndDate = null
+        target.suspensionReason = null
+        userRepository.save(target)
+
+        emailService.sendReactivationEmail(
+            toEmail = target.email,
+            username = target.username
+        )
+    }
+
+    /**
+     * Reactiva automáticamente a los usuarios cuya suspensión ya venció
+     * (status = 1 y suspensionEndDate <= hoy) y les envía el correo de reactivación.
+     * Devuelve la cantidad de usuarios reactivados.
+     */
+    @Transactional
+    fun reactivateExpiredSuspensions(): Int {
+        val today = LocalDate.now()
+        val expired = userRepository.findByStatusAndSuspensionEndDateLessThanEqual(1, today)
+
+        expired.forEach { user ->
+            user.status = 0
+            user.suspensionStartDate = null
+            user.suspensionEndDate = null
+            user.suspensionReason = null
+            userRepository.save(user)
+            emailService.sendReactivationEmail(
+                toEmail = user.email,
+                username = user.username
+            )
+        }
+
+        return expired.size
     }
 }

@@ -51,6 +51,26 @@ class EmailService(
         mailSender.send(message)
     }
 
+    fun sendReactivationEmail(toEmail: String, username: String) {
+        val message = mailSender.createMimeMessage()
+        val helper = MimeMessageHelper(message, true, "UTF-8")
+
+        helper.setFrom(fromAddress)
+        helper.setTo(toEmail)
+        helper.setSubject("Tu cuenta ha sido reactivada - Patrónika")
+        helper.setText(
+            """
+            <h2>Hola, $username</h2>
+            <p>Tu suspensión ha finalizado y tu cuenta en Patrónika ya está activa nuevamente.</p>
+            <p>Ya puedes volver a iniciar sesión y usar la plataforma con normalidad.</p>
+            <p>Gracias por ser parte de la comunidad.</p>
+            """.trimIndent(),
+            true
+        )
+
+        mailSender.send(message)
+    }
+
     fun sendEmailChangeCode(toEmail: String, code: String) {
         val message = mailSender.createMimeMessage()
         val helper = MimeMessageHelper(message, true, "UTF-8")

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import pe.edu.ulima.patronika.ApiResponse
 import pe.edu.ulima.patronika.database.model.User
+import pe.edu.ulima.patronika.dto.ReactivateUserRequest
 import pe.edu.ulima.patronika.dto.SuspendUserRequest
 import pe.edu.ulima.patronika.dto.UserChangePasswordRequest
 import pe.edu.ulima.patronika.dto.UserRequest
@@ -114,5 +115,15 @@ class UsersController (
     ): ResponseEntity<ApiResponse<String>> {
         usersService.suspendUser(body.adminId, id, body.days, body.reason)
         return ResponseEntity.ok(ApiResponse(true, "Usuario suspendido exitosamente"))
+    }
+
+    @PostMapping("/{id}/reactivate")
+    @Operation(summary = "Reactivate suspended user")
+    fun reactivateUser(
+        @PathVariable id: UUID,
+        @RequestBody body: ReactivateUserRequest
+    ): ResponseEntity<ApiResponse<String>> {
+        usersService.reactivateUser(body.adminId, id)
+        return ResponseEntity.ok(ApiResponse(true, "Usuario reactivado exitosamente"))
     }
 }
