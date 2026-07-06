@@ -60,6 +60,13 @@ class CommentsController (
         return ResponseEntity.ok(ApiResponse(true, comment))
     }
 
+    @PostMapping("/{id}/clear-reports")
+    @Operation(summary = "Clear comment reports")
+    fun clearCommentReports(@PathVariable id: UUID): ResponseEntity<ApiResponse<CommentResponse>> {
+        val comment = commentsService.clearReports(id)
+        return ResponseEntity.ok(ApiResponse(true, comment))
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete comment")
     fun deleteComment(@PathVariable id: UUID) : ResponseEntity<ApiResponse<String>> {

@@ -8,7 +8,4 @@ data class UserRequest(
     @field:NotBlank val email: String,
     var password: String,
     val isAdmin: Boolean = false,
-    val status: Int = 0,
-    val activateNotification: Boolean = true,
-    val suspensionEndDate: LocalDate? = null,
 )

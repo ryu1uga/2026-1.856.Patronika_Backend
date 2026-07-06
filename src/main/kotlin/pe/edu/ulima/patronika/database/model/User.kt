@@ -13,7 +13,7 @@ class User (
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     var username: String = "",
 
     @Column(nullable = false, unique = true)
@@ -43,6 +43,12 @@ class User (
     var activateNotification: Boolean = true,
 
     var suspensionEndDate: LocalDate? = null,
+
+    @Column(name = "suspension_start_date")
+    var suspensionStartDate: LocalDate? = null,
+
+    @Column(name = "suspension_reason")
+    var suspensionReason: String? = null,
 
     var token: String = ""
 ) {
