@@ -60,7 +60,7 @@ class UsersServiceTest {
         username = username,
         email = email,
         password = password,
-        status = status,
+
     )
 
     private fun buildUserUpdateRequest(
@@ -72,7 +72,6 @@ class UsersServiceTest {
         username = username,
         email = email,
         isAdmin = isAdmin,
-        status = status,
     )
     private fun buildUserChangePasswordRequest(
         email: String = "ana@example.com",
@@ -222,8 +221,6 @@ class UsersServiceTest {
         assertEquals(request.username, User.username)
         assertEquals(request.email, User.email)
         assertEquals(request.isAdmin, User.isAdmin)
-        assertEquals(request.status, User.status)
-        assertEquals(request.suspensionEndDate,User.suspensionEndDate)
 
         verify(userRepository).save(User)
     }

@@ -99,6 +99,27 @@ class JwtServiceTest {
     }
 
     @Test
+    fun validateRefreshToken_tokenCorrupto() {
+        assertFalse(jwtService.validateRefreshToken("esto-no-es-un-jwt"))
+    }
+
+    @Test
+    fun validateRefreshToken_tokenVacio() {
+        assertFalse(jwtService.validateRefreshToken(""))
+    }
+
+    @Test
+    fun validateRefreshToken_firmadoConOtroSecreto() {
+        val otroSecreto = Base64.getEncoder()
+            .encodeToString(Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256).encoded)
+        val otroServicio = JwtService(otroSecreto)
+
+        val tokenAjeno = otroServicio.generateRefreshToken(userId)
+
+        assertFalse(jwtService.validateRefreshToken(tokenAjeno))
+    }
+
+    @Test
     fun getUserIdFromTokenBearer_devuelveId() {
         val token = jwtService.generateAccessToken(userId)
 

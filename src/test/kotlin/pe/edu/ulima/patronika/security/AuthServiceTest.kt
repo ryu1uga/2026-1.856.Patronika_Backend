@@ -27,6 +27,7 @@ import pe.edu.ulima.patronika.database.repository.UserRepository
 import pe.edu.ulima.patronika.dto.ForgotPasswordRequest
 import pe.edu.ulima.patronika.exception.BadRequestException
 import pe.edu.ulima.patronika.exception.ConflictException
+import pe.edu.ulima.patronika.exception.NotFoundException
 import pe.edu.ulima.patronika.exception.UnauthorizedException
 import pe.edu.ulima.patronika.services.EmailService
 import pe.edu.ulima.patronika.services.UsersService
@@ -79,14 +80,18 @@ class AuthServiceTest {
         email: String = "user@example.com",
         hashedPassword: String = "hashed-real",
         status: Int = 0,
-        suspendUserEndDate: LocalDate? = null
+        suspensionStartDate: LocalDate? = null,
+        suspendUserEndDate: LocalDate? = null,
+        suspensionReason: String? = null
     ) = User(
         id = id,
         username = username,
         email = email,
         hashedPassword = hashedPassword,
         status = status,
-        suspensionEndDate = suspendUserEndDate
+        suspensionStartDate = suspensionStartDate,
+        suspensionEndDate = suspendUserEndDate,
+        suspensionReason = suspensionReason,
         )
 
     private fun sha256Base64(raw: String): String {
@@ -120,7 +125,11 @@ class AuthServiceTest {
 
     @Test
     fun login_suspensionVencida(){
-        val user = buildUser(status = 1, suspendUserEndDate = LocalDate.now().minusDays(1))
+        val user = buildUser(status = 1,
+            suspensionStartDate = LocalDate.now().minusDays(10),
+            suspendUserEndDate = LocalDate.now().minusDays(1),
+            suspensionReason = "spam"
+        )
         whenever(userRepository.findByUsername("user")).thenReturn(user)
         whenever(hashEncoder.matches("clave123", user.hashedPassword)).thenReturn(true)
         whenever(jwtService.generateAccessToken(user.id.toString())).thenReturn("access-token")
@@ -130,7 +139,9 @@ class AuthServiceTest {
         val result = authService.login("user", "clave123")
 
         assertEquals(0, user.status)
+        assertNull(user.suspensionStartDate)
         assertNull(user.suspensionEndDate)
+        assertNull(user.suspensionReason)
         assertNull(result.suspensionDaysRemaining)
     }
 
@@ -295,7 +306,7 @@ class AuthServiceTest {
     @Test
     fun requestVerficationCodeAemailExistente_EmailInexistente(){
         whenever(userRepository.findByEmail(any())).thenReturn(null)
-        val error = assertThrows(ConflictException::class.java) {
+        val error = assertThrows(NotFoundException::class.java) {
             authService.requestVerificationCodeOnExistingEmail("user@email.com")
         }
         assertEquals("El correo no está registrado",error.message)
@@ -359,9 +370,10 @@ class AuthServiceTest {
         val req = ForgotPasswordRequest(email = "inexistente@email.com", password = "123")
         whenever(userRepository.findByEmail(req.email)).thenReturn(null)
 
-        assertThrows(NullPointerException::class.java) {
+        val error = assertThrows(NotFoundException::class.java) {
             authService.changePassword(req)
         }
+        assertEquals("No existe un usuario con ese correo", error.message)
     }
 
 
