@@ -13,7 +13,7 @@ participant UsersService
 participant UserRepository
 
 == Paso 1: Solicitar código de verificación ==
-Client -> AuthController : POST /auth/request-code { email }
+Client -> AuthController : POST /auth/register/request-code { email }
 AuthController -> AuthService : requestVerificationCode(email)
 AuthService -> UserRepository : findByEmail(email)
 UserRepository --> AuthService : null
@@ -33,7 +33,7 @@ AuthController --> Client : 200 OK
 
 == Paso 3: Crear cuenta ==
 Client -> AuthController : POST /auth/register { username, email, password }
-AuthController -> UsersService : createUser(userRequest)
+AuthController -> UsersService : insertUser(userRequest)
 UsersService -> UserRepository : findByUsername(username)
 UserRepository --> UsersService : null
 UsersService -> UserRepository : findByEmail(email)
@@ -66,6 +66,7 @@ alt credenciales inválidas
     AuthService --> AuthController : BadCredentialsException
     AuthController --> Client : 401 Unauthorized
 else credenciales válidas
+    AuthService -> AuthService : auto-levantar suspensión si venció
     AuthService -> UserRepository : save(user) [loggedIn = true]
     AuthService -> JwtService : generateAccessToken(userId)
     JwtService --> AuthService : accessToken
@@ -113,5 +114,59 @@ PublicationsService -> PublicationRepository : save(publication)
 PublicationsService -> PublishedPatternRepository : save(publishedPattern)
 PublicationsService --> PublicationsController : PublicationResponse
 PublicationsController --> Client : 201 Created
+
+@enduml
+
+@startuml Sequence_Suspension
+skinparam monochrome true
+skinparam shadowing false
+
+title Suspensión y reactivación de usuario
+
+actor Admin
+participant UsersController
+participant UsersService
+participant UserRepository
+participant EmailService
+
+== Suspender ==
+Admin -> UsersController : POST /users/{id}/suspend { adminId, days, reason }
+UsersController -> UsersService : suspendUser(adminId, id, days, reason)
+UsersService -> UserRepository : getUser(adminId)
+UserRepository --> UsersService : admin [verifica isAdmin]
+UsersService -> UserRepository : save(target) [status=1, start/end/reason]
+UsersService -> EmailService : sendSuspensionEmail(...)
+UsersController --> Admin : 200 OK
+
+== Reactivar (manual o automático al vencer) ==
+Admin -> UsersController : POST /users/{id}/reactivate { adminId }
+UsersController -> UsersService : reactivateUser(adminId, id)
+UsersService -> UserRepository : save(target) [status=0, campos = null]
+UsersService -> EmailService : sendReactivationEmail(...)
+UsersController --> Admin : 200 OK
+
+@enduml
+
+@startuml Sequence_ClearReports
+skinparam monochrome true
+skinparam shadowing false
+
+title Perdón / limpieza de reportes
+
+actor Admin
+participant PublicationsController
+participant PublicationsService
+participant PublicationRepository
+
+Admin -> PublicationsController : POST /publications/{id}/clear-reports
+PublicationsController -> PublicationsService : clearReports(id)
+PublicationsService -> PublicationRepository : getPublicationEntity(id)
+PublicationRepository --> PublicationsService : Publication
+PublicationsService -> PublicationRepository : save(reportCount = 0)
+PublicationsController --> Admin : 200 OK "Reportes eliminados"
+
+note over Admin, PublicationRepository
+  El mismo patrón aplica a POST /comments/{id}/clear-reports
+end note
 
 @enduml
