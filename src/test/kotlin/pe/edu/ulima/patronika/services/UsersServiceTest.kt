@@ -55,7 +55,7 @@ class UsersServiceTest {
         username: String = "ana123",
         email: String = "ana@example.com",
         password: String = "Clave123!",
-        status: Int = 1
+
     ) = UserRequest(
         username = username,
         email = email,
@@ -67,7 +67,7 @@ class UsersServiceTest {
         username: String = "ana123",
         email: String = "ana@example.com",
         isAdmin: Boolean = false,
-        status: Int = 1
+
     ) = UserUpdateRequest(
         username = username,
         email = email,
@@ -90,7 +90,9 @@ class UsersServiceTest {
         isAdmin: Boolean = false,
         status: Int = 0,
         activateNotification: Boolean = true,
-        suspensionEndDate: LocalDate? = null
+        suspensionStartDate: LocalDate? = null,
+        suspensionEndDate: LocalDate? = null,
+        suspensionReason: String? = null
     ) = User(
         id = id,
         username = username,
@@ -99,7 +101,9 @@ class UsersServiceTest {
         isAdmin = isAdmin,
         status = status,
         activateNotification = activateNotification,
-        suspensionEndDate = suspensionEndDate
+        suspensionStartDate = suspensionStartDate,
+        suspensionEndDate = suspensionEndDate,
+        suspensionReason = suspensionReason
     )
 
     private val codeExpiryMs = 10 * 60 * 1000L
@@ -345,6 +349,16 @@ class UsersServiceTest {
     }
 
     @Test
+    fun changePassword_EmailnoEncontrado(){
+        val req = buildUserChangePasswordRequest(email = "ana@gmail.com")
+        whenever(userRepository.findByEmail("ana@gmail.com")).thenReturn(null)
+        val error = assertThrows(NotFoundException::class.java) {
+            usersService.changePassword(req)
+        }
+        assertEquals("No existe un usuario con ese correo",error.message)
+    }
+
+    @Test
     fun changePassword_HashDoesNotMatch(){
         val user = buildUser(username ="ana",email = "ana@gmail.com")
         val req = buildUserChangePasswordRequest(email = "ana@gmail.com", currentPassword = "clave123")
@@ -391,12 +405,14 @@ class UsersServiceTest {
 
 
         assertEquals(1,target.status)
+        assertEquals(LocalDate.now(),target.suspensionStartDate)
         assertEquals(LocalDate.now().plusDays(7),target.suspensionEndDate)
+        assertEquals("Comportamiento inapropiado",target.suspensionReason)
         verify(userRepository).save(target)
         verify(emailService).sendSuspensionEmail(
             toEmail = target.email,
             username = target.username,
-            reason = "Comportamiento inapropiado",
+            reason = target.suspensionReason!!,
             days = 7,
             endDate = target.suspensionEndDate!!
         )
@@ -409,11 +425,113 @@ class UsersServiceTest {
         val admin = buildUser(adminId,"admin", isAdmin = false)
         whenever(userRepository.findById(adminId)).thenReturn(Optional.of(admin))
 
-        val error = assertThrows(UnauthorizedException::class.java) {
+        assertThrows(UnauthorizedException::class.java) {
             usersService.suspendUser(adminId, targetId, days = 7, reason = "Comportamiento inapropiado")
         }
         verify(userRepository,never()).save(any())
 
+    }
+
+    //reactivateUser
+    @Test
+    fun reactivateUser_FlujoCompleto(){
+        val adminId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val target = buildUser(targetId,"target", isAdmin = false,status=1, suspensionEndDate = LocalDate.now().minusDays(1),suspensionStartDate = LocalDate.now().minusDays(7),suspensionReason = "Comportamento inapropiado")
+        val admin = buildUser(adminId,"admin", isAdmin = true)
+        whenever(userRepository.findById(adminId)).thenReturn(Optional.of(admin))
+        whenever(userRepository.findById(targetId)).thenReturn(Optional.of(target))
+
+        usersService.reactivateUser(adminId,targetId)
+        assertEquals(0,target.status)
+        assertNull(target.suspensionStartDate)
+        assertNull(target.suspensionEndDate)
+        assertNull(target.suspensionReason)
+        verify(userRepository).save(target)
+
+        verify(emailService).sendReactivationEmail(
+            toEmail = target.email,
+            username = target.username,
+        )
+    }
+    @Test
+    fun reactivateUser_UserNoEsAdmin(){
+        val adminId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val admin = buildUser(adminId,"admin", isAdmin = false)
+        whenever(userRepository.findById(adminId)).thenReturn(Optional.of(admin))
+
+        assertThrows(UnauthorizedException::class.java) {
+            usersService.reactivateUser(adminId, targetId)
+        }
+        verify(userRepository,never()).save(any())
+
+    }
+
+    @Test
+    fun reactivateUser_TargetNoEstaSuspendido(){
+        val adminId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val admin = buildUser(adminId,"admin", isAdmin = true)
+        val target = buildUser(adminId,"target", status = 0)
+        whenever(userRepository.findById(adminId)).thenReturn(Optional.of(admin))
+        whenever(userRepository.findById(targetId)).thenReturn(Optional.of(target))
+
+        val error = assertThrows(BadRequestException::class.java) {
+            usersService.reactivateUser(adminId, targetId)
+        }
+        assertEquals("El usuario no está suspendido", error.message)
+    }
+
+    //reactivateExpiredSuspensions
+
+    @Test
+    fun reactivateExpiredSuspensions_FlujoCompleto(){
+        val usuario1 = buildUser(
+            username = "user1", email = "user1@example.com", status = 1,
+            suspensionStartDate = LocalDate.now().minusDays(10),
+            suspensionEndDate = LocalDate.now(),
+            suspensionReason = "Spam"
+        )
+        val usuario2 = buildUser(
+            username = "user2", email = "user2@example.com", status = 1,
+            suspensionStartDate = LocalDate.now().minusDays(20),
+            suspensionEndDate = LocalDate.now().minusDays(1),
+            suspensionReason = "Insultos"
+        )
+
+        whenever(userRepository.findByStatusAndSuspensionEndDateLessThanEqual(1, LocalDate.now()))
+            .thenReturn(listOf(usuario1, usuario2))
+
+        val cantidad = usersService.reactivateExpiredSuspensions()
+
+        assertEquals(2, cantidad)
+
+        assertEquals(0, usuario1.status)
+        assertNull(usuario1.suspensionStartDate)
+        assertNull(usuario1.suspensionEndDate)
+        assertNull(usuario1.suspensionReason)
+
+        assertEquals(0, usuario2.status)
+        assertNull(usuario2.suspensionStartDate)
+        assertNull(usuario2.suspensionEndDate)
+        assertNull(usuario2.suspensionReason)
+
+        verify(userRepository).save(usuario1)
+        verify(userRepository).save(usuario2)
+        verify(emailService).sendReactivationEmail(toEmail = "user1@example.com", username = "user1")
+        verify(emailService).sendReactivationEmail(toEmail = "user2@example.com", username = "user2")
+    }
+
+    @Test
+    fun reactivateExpiredSuspensions_SinUsuariosVencidos(){
+        whenever(userRepository.findByStatusAndSuspensionEndDateLessThanEqual(1, LocalDate.now())).thenReturn(emptyList())
+
+        val cantidad = usersService.reactivateExpiredSuspensions()
+
+        assertEquals(0, cantidad)
+        verify(userRepository, never()).save(any())
+        verifyNoInteractions(emailService)
     }
 
     //getALL

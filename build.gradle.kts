@@ -74,7 +74,12 @@ pitest {
 		"pe.edu.ulima.patronika.security.JwtServiceTest",
 		"pe.edu.ulima.patronika.services.UsersServiceTest",
 		"pe.edu.ulima.patronika.security.AuthServiceTest",
-		"pe.edu.ulima.patronika.services.PatternsServiceTest"
+		"pe.edu.ulima.patronika.services.PatternsServiceTest",
+		"pe.edu.ulima.patronika.services.PatternLibraryServiceTest",
+		"pe.edu.ulima.patronika.services.PublicationsServiceTest",
+		"pe.edu.ulima.patronika.services.CommentsServiceTest",
+		"pe.edu.ulima.patronika.services.TutorialsServiceTest",
+		"pe.edu.ulima.patronika.services.TutorialProgressesServiceTest"
 	))
 	mutators.set(setOf("DEFAULTS"))
 	outputFormats.set(setOf("HTML"))
