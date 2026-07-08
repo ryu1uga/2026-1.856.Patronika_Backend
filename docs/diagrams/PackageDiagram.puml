@@ -78,14 +78,28 @@ package "pe.edu.ulima.patronika" {
     package "exception" {
         class BadRequestException
         class ConflictException
+        class NotFoundException
         class UnauthorizedException
         class GlobalExceptionHandler
     }
 
     package "ratelimit" {
         class RateLimitFilter
+        class RateLimitConfig
+        class RateLimitProperties
     }
+
+    package "scheduled" {
+        class ExpiredTokenCleanupScheduler
+        class SuspensionReactivationScheduler
+    }
+
+    class ApiResponse
+    class PatronikaApplication
 }
+
+scheduled ..> services : usa
+scheduled ..> repository : usa
 
 controllers ..> services : usa
 controllers ..> security : usa

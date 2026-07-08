@@ -13,7 +13,9 @@ erDiagram
         INTEGER status
         DATE registered_date
         BOOLEAN activate_notification
+        DATE suspension_start_date
         DATE suspension_end_date
+        TEXT suspension_reason
         VARCHAR token
     }
 

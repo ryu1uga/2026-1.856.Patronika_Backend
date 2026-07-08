@@ -9,7 +9,9 @@ node "Dispositivo Cliente" {
 node "Servidor de Aplicación" {
     artifact "Spring Boot\n(Kotlin · JVM 21)\nPuerto 8080" as SpringBoot
     artifact "Spring Security\n+ JWT Auth Filter" as Security
+    artifact "Tareas Programadas\n(@Scheduled: tokens y suspensiones)" as Schedulers
     SpringBoot -- Security
+    SpringBoot -- Schedulers
 }
 
 node "Servidor de Base de Datos" {

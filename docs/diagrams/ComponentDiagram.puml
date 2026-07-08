@@ -13,6 +13,7 @@ package "Spring Boot Application" {
     component "AuthService\n(Login / Registro / JWT)" as AuthService
     component "JwtService\n(Generación / Validación)" as JwtService
     component "Repositories\n(Spring Data JPA)" as Repositories
+    component "Schedulers\n(@Scheduled: limpieza de tokens\ny reactivación de suspensiones)" as Schedulers
     component "Flyway\n(Migraciones SQL)" as Flyway
 }
 
@@ -28,6 +29,8 @@ Controllers --> AuthService
 AuthService --> JwtService
 AuthService --> Repositories
 Services --> Repositories
+Schedulers --> Services
+Schedulers --> Repositories
 Repositories --> PostgreSQL : JDBC
 Flyway --> PostgreSQL : DDL
 Services --> Cloudinary : HTTPS

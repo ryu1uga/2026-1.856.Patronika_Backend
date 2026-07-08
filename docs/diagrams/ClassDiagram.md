@@ -94,7 +94,6 @@ class TutorialsService {
 
 class TutorialProgressesService {
   -tutorialProgressRepository: TutorialProgressRepository
-  -tutorialRepository: TutorialRepository
   -userRepository: UserRepository
 }
 
@@ -107,7 +106,8 @@ class PatternLibraryService {
 class JwtService {
   +generateAccessToken()
   +generateRefreshToken()
-  +validateToken()
+  +validateAccessToken()
+  +validateRefreshToken()
   +getUserIdFromToken()
 }
 
@@ -120,6 +120,7 @@ class EmailService {
   +sendVerificationCode()
   +sendPublicationDeletedEmail()
   +sendSuspensionEmail()
+  +sendReactivationEmail()
   +sendEmailChangeCode()
 }
 
@@ -129,7 +130,7 @@ class CloudinaryService {
 }
 
 class ImageConvolutionService {
-  +processImage()
+  +imageToGridData()
 }
 
 %% =========================
@@ -202,7 +203,9 @@ class User {
   +LocalDate registeredDate
   +Boolean activateNotification
   +LocalDate? suspensionEndDate
-  +String? token
+  +LocalDate? suspensionStartDate
+  +String? suspensionReason
+  +String token
 }
 
 class Pattern {
@@ -242,7 +245,6 @@ class Tutorial {
   +UUID? id
   +String title
   +String description
-  +Int difficulty
   +String url
 }
 
@@ -334,7 +336,6 @@ CommentsService --> UserRepository
 TutorialsService --> TutorialRepository
 
 TutorialProgressesService --> TutorialProgressRepository
-TutorialProgressesService --> TutorialRepository
 TutorialProgressesService --> UserRepository
 
 PatternLibraryService --> PatternLibraryRepository
